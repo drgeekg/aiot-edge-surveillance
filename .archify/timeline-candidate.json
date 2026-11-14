@@ -1,0 +1,102 @@
+{
+  "schema_version": 1,
+  "diagram_type": "timeline",
+  "meta": {
+    "title": "Unattended Object Detection Incident Timeline",
+    "output": "docs/diagrams/incident-timeline.html",
+    "evidence": "illustrative",
+    "timezone": "Asia/Kolkata",
+    "quality_profile": "showcase"
+  },
+  "lanes": [
+    { "id": "edge", "label": "Edge Streaming" },
+    { "id": "detector", "label": "CV Detection & Owner Tracker" },
+    { "id": "rules", "label": "Rule Engine & Alerts" }
+  ],
+  "events": [
+    {
+      "id": "e_stream_start",
+      "at": "2026-11-11T10:00:00+05:30",
+      "title": "Edge Stream Connected",
+      "detail": "edge-01 streams 640x480 JPEG frames (q=70) at 5 FPS to POST /frames.",
+      "lane": "edge",
+      "kind": "change"
+    },
+    {
+      "id": "e_object_arrives",
+      "at": "2026-11-11T10:00:05+05:30",
+      "title": "Owner & Backpack Detected",
+      "detail": "YOLO26n detects person and backpack (conf >= 0.40); Tracker creates track_id=2 bound to owner_id=1.",
+      "lane": "detector",
+      "kind": "default"
+    },
+    {
+      "id": "e_person_departs",
+      "at": "2026-11-11T10:00:10+05:30",
+      "title": "Owner Departs Area",
+      "detail": "Owner moves beyond owner_radius (0.20); unattended dwell clock starts counting from last_person_near_ts.",
+      "lane": "detector",
+      "kind": "change"
+    },
+    {
+      "id": "e_r2_warning",
+      "at": "2026-11-11T10:00:15+05:30",
+      "title": "R2 Unexpected Object Warning",
+      "detail": "Backpack track alive >= 5s; RuleEngine emits unexpected_object warning keyed by ('unexpected_object', 2).",
+      "lane": "rules",
+      "kind": "alert"
+    },
+    {
+      "id": "e_passerby_ignored",
+      "at": "2026-11-11T10:00:25+05:30",
+      "title": "Passerby Ignored (Anti-Evasion)",
+      "detail": "Non-owner walks past for 1s (< 2s stationary threshold); unattended dwell timer is NOT reset.",
+      "lane": "detector",
+      "kind": "default"
+    },
+    {
+      "id": "e_r3_critical",
+      "at": "2026-11-11T10:00:40+05:30",
+      "title": "R3 Object Dwell Critical Alarm",
+      "detail": "Unattended time reaches 30s; fires critical alert, console banner, beep, and red frame border.",
+      "lane": "rules",
+      "kind": "alert"
+    },
+    {
+      "id": "e_owner_returns",
+      "at": "2026-11-11T10:00:45+05:30",
+      "title": "Owner Returns Within Radius",
+      "detail": "Bound owner_id=1 returns within 0.20 radius; last_person_near_ts updates and RESETS unattended timer to 0s.",
+      "lane": "rules",
+      "kind": "action"
+    },
+    {
+      "id": "e_incident_cleared",
+      "at": "2026-11-11T10:01:02+05:30",
+      "title": "Object Removed & Track Expired",
+      "detail": "Backpack is carried away; track expires after 15s track_timeout; incident cleared.",
+      "lane": "rules",
+      "kind": "recovery"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Owner Binding & Reset Semantics",
+      "items": [
+        "At first_seen (10:00:05), Tracker binds the nearest person within 0.20 radius as owner_id",
+        "Transient passersby (< 2s near bag) do not reset the unattended clock",
+        "When the bound owner returns (or a guard stands stationary >= 2s), the unattended clock RESETS to 0s"
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "Two-Stage Escalation & 15s Occlusion Window",
+      "items": [
+        "Stage 1 (5s lifetime): R2 warning flags unexpected watch-class object",
+        "Stage 2 (30s unattended): R3 critical alarm triggers audio beep and red frame overlay",
+        "Tracks survive up to 15s of temporary occlusion before being purged on removal"
+      ]
+    }
+  ]
+}

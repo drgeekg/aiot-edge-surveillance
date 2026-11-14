@@ -1,0 +1,80 @@
+{
+  "schemaVersion": 1,
+  "ok": true,
+  "command": "finalize",
+  "status": "pass",
+  "type": "dataflow",
+  "quality": "showcase",
+  "specification": {
+    "path": "C:\\Users\\Ganesh\\Desktop\\AIIot project\\.archify\\dataflow-candidate.json",
+    "sha256": "75d1cb4a5c8f99bd27cbaa0f2a3ff5537de7b8902160969ea2360c73a731f256",
+    "bytes": 4490
+  },
+  "artifact": {
+    "path": "C:\\Users\\Ganesh\\Desktop\\AIIot project\\docs\\diagrams\\pipeline-dataflow.html",
+    "sha256": "340f290c30c80059fa2aef2434a1cb84935be0837e8c122966d8fc26526a0666",
+    "bytes": 843727
+  },
+  "gates": {
+    "validate": "pass",
+    "deliver": "pass",
+    "check": "pass",
+    "browser-check": "pass"
+  },
+  "diagnostics": [],
+  "diagnosticSummary": {
+    "total": 0,
+    "shown": 0,
+    "truncated": false
+  },
+  "evidence": {
+    "receipt": "C:\\Users\\Ganesh\\Desktop\\AIIot project\\.archify\\rev-df\\pipeline-dataflow.finalize.json",
+    "summaryReceipt": "C:\\Users\\Ganesh\\Desktop\\AIIot project\\.archify\\rev-df\\pipeline-dataflow.finalize-summary.json",
+    "browserCheckReceipt": "C:\\Users\\Ganesh\\Desktop\\AIIot project\\.archify\\rev-df\\pipeline-dataflow.browser-check.json"
+  },
+  "visualReview": "not-requested",
+  "durationMs": 5941,
+  "browserCheck": {
+    "requested": true,
+    "ran": true
+  },
+  "visualReviewRecommendation": {
+    "action": "inspect-route-readability",
+    "signals": {
+      "routesOverSuggestedBends": 1,
+      "routesOverSuggestedStretch": 1
+    },
+    "reason": "Automated gates passed, but crossings or detours still need perceptual review before claiming visual quality.",
+    "affectedRoutes": {
+      "crossings": [],
+      "detours": [
+        {
+          "relationship": {
+            "id": "f-api-rules",
+            "from": "api_ingest",
+            "to": "rule_node",
+            "label": "injected JSON",
+            "collectionIndex": 6,
+            "artifactIndex": 7
+          },
+          "bends": 4,
+          "stretch": 1.373,
+          "directCorridorBlockers": [
+            {
+              "id": "onnx_head",
+              "label": "YOLO26n ONNX",
+              "box": [
+                474,
+                242,
+                112,
+                58
+              ]
+            }
+          ]
+        }
+      ],
+      "truncated": false
+    },
+    "repair": "Advisory only: this mode places or routes these relationships itself. Report them; do not remove relationships or meaning to reduce crossings."
+  }
+}

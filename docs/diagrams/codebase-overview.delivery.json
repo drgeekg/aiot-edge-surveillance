@@ -1,0 +1,36 @@
+{
+  "schemaVersion": 1,
+  "receiptId": "c5350d88-714f-48cf-924f-10362c7c386a",
+  "status": "current",
+  "command": "deliver",
+  "type": "explainer",
+  "input": "C:\\Users\\Ganesh\\Desktop\\AIIot project\\.archify\\explainer-codebase-overview-20261114-212500\\candidate.archify.md",
+  "output": "C:\\Users\\Ganesh\\Desktop\\AIIot project\\docs\\diagrams\\codebase-overview.html",
+  "specification": {
+    "sha256": "03c201c6aaaf872bc9bbb1b4043c9221c453652259696b24c33fb9bf18a1d2d8",
+    "bytes": 4935
+  },
+  "artifact": {
+    "sha256": "e65419786612de6fe10460ebcfa19109377dd46a0c4f51f72f0a94644dd1d787",
+    "bytes": 935495
+  },
+  "explainer": {
+    "preparedSha256": "956d787262bc2d0a4d484bc4d79d1f8d97470406fcb81af98a1413350574e75e",
+    "dependencies": [
+      {
+        "kind": "diagram-spec",
+        "id": "runtime-topology",
+        "inline": true,
+        "sha256": "5ed41fba95a5e0f9cb83a627c27534909f22b95fb9b76b66e68fa2c945e8b8cd",
+        "bytes": 1025
+      },
+      {
+        "kind": "diagram-spec",
+        "id": "dual-ingest",
+        "inline": true,
+        "sha256": "56bd052f4fb18701ffe38439c6420c47151affe07f3eda8aecc960ffd5957c7e",
+        "bytes": 1224
+      }
+    ]
+  }
+}

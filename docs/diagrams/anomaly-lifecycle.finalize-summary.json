@@ -1,0 +1,99 @@
+{
+  "schemaVersion": 1,
+  "ok": true,
+  "command": "finalize",
+  "status": "pass",
+  "type": "lifecycle",
+  "quality": "showcase",
+  "specification": {
+    "path": "C:\\Users\\Ganesh\\Desktop\\AIIot project\\.archify\\lifecycle-candidate.json",
+    "sha256": "59bef67c2733b14ea9ad7e746f6e73e8c53d6b93244cc4fba383851092c61cff",
+    "bytes": 3940
+  },
+  "artifact": {
+    "path": "C:\\Users\\Ganesh\\Desktop\\AIIot project\\docs\\diagrams\\anomaly-lifecycle.html",
+    "sha256": "727e5759702c00f270c593447f2ad0f4740a194c04e6b3eac7be1b641741a148",
+    "bytes": 847668
+  },
+  "gates": {
+    "validate": "pass",
+    "deliver": "pass",
+    "check": "pass",
+    "browser-check": "pass"
+  },
+  "diagnostics": [],
+  "diagnosticSummary": {
+    "total": 0,
+    "shown": 0,
+    "truncated": false
+  },
+  "evidence": {
+    "receipt": "C:\\Users\\Ganesh\\Desktop\\AIIot project\\.archify\\rev-lc\\anomaly-lifecycle.finalize.json",
+    "summaryReceipt": "C:\\Users\\Ganesh\\Desktop\\AIIot project\\.archify\\rev-lc\\anomaly-lifecycle.finalize-summary.json",
+    "browserCheckReceipt": "C:\\Users\\Ganesh\\Desktop\\AIIot project\\.archify\\rev-lc\\anomaly-lifecycle.browser-check.json"
+  },
+  "visualReview": "not-requested",
+  "durationMs": 6399,
+  "browserCheck": {
+    "requested": true,
+    "ran": true
+  },
+  "visualReviewRecommendation": {
+    "action": "inspect-route-readability",
+    "signals": {
+      "resolvedCrossovers": 2
+    },
+    "reason": "Automated gates passed, but crossings or detours still need perceptual review before claiming visual quality.",
+    "affectedRoutes": {
+      "crossings": [
+        {
+          "left": {
+            "id": "t-tracking-occluded",
+            "from": "tracking",
+            "to": "occluded",
+            "label": "hidden",
+            "collectionIndex": 6,
+            "artifactIndex": 7
+          },
+          "right": {
+            "id": "t-dwell-owner",
+            "from": "dwell_alert",
+            "to": "owner_reset",
+            "label": "owner returns",
+            "collectionIndex": 11,
+            "artifactIndex": 12
+          },
+          "point": [
+            859.5999999999999,
+            186
+          ]
+        },
+        {
+          "left": {
+            "id": "t-occluded-tracking",
+            "from": "occluded",
+            "to": "tracking",
+            "label": "re-seen &lt;=15s",
+            "collectionIndex": 7,
+            "artifactIndex": 8
+          },
+          "right": {
+            "id": "t-dwell-owner",
+            "from": "dwell_alert",
+            "to": "owner_reset",
+            "label": "owner returns",
+            "collectionIndex": 11,
+            "artifactIndex": 12
+          },
+          "point": [
+            885.5999999999999,
+            185.89333333333337
+          ]
+        }
+      ],
+      "detours": [],
+      "truncated": false
+    },
+    "repair": "Advisory only: this mode places or routes these relationships itself. Report them; do not remove relationships or meaning to reduce crossings."
+  }
+}

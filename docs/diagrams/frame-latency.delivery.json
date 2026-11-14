@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 1,
+  "receiptId": "c851c546-6b87-4fc6-8c67-aa69fda28227",
+  "status": "current",
+  "command": "deliver",
+  "type": "waterfall",
+  "input": "C:\\Users\\Ganesh\\Desktop\\AIIot project\\.archify\\waterfall-candidate.json",
+  "output": "C:\\Users\\Ganesh\\Desktop\\AIIot project\\docs\\diagrams\\frame-latency.html",
+  "specification": {
+    "sha256": "6ef471d0faee59046ac0f1db5e063f7d9fe43cda94509d2cd1184907f0aae487",
+    "bytes": 3337
+  },
+  "artifact": {
+    "sha256": "be14e1f64dd05e0396f79fa7d436fabe0de978c17e4a48d2716646171302f9d5",
+    "bytes": 840662
+  }
+}

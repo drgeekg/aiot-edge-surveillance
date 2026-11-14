@@ -1,0 +1,1 @@
+{"excludes": [".archify/", "docs/diagrams/", "screenshots/", "data/*.mp4", "docs/CODEBASE_REFERENCE.*"]}

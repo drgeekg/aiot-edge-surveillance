@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 1,
+  "receiptId": "bf0adf18-bc06-44ba-ad72-49cc74c05e70",
+  "status": "current",
+  "command": "deliver",
+  "type": "lifecycle",
+  "input": "C:\\Users\\Ganesh\\Desktop\\AIIot project\\.archify\\lifecycle-candidate.json",
+  "output": "C:\\Users\\Ganesh\\Desktop\\AIIot project\\docs\\diagrams\\anomaly-lifecycle.html",
+  "specification": {
+    "sha256": "59bef67c2733b14ea9ad7e746f6e73e8c53d6b93244cc4fba383851092c61cff",
+    "bytes": 3940
+  },
+  "artifact": {
+    "sha256": "727e5759702c00f270c593447f2ad0f4740a194c04e6b3eac7be1b641741a148",
+    "bytes": 847668
+  }
+}

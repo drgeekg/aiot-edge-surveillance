@@ -1,0 +1,70 @@
+{
+  "schemaVersion": 1,
+  "ok": true,
+  "command": "finalize",
+  "status": "pass",
+  "type": "architecture",
+  "quality": "showcase",
+  "specification": {
+    "path": "C:\\Users\\Ganesh\\Desktop\\AIIot project\\.archify\\agent-interaction-candidate.json",
+    "sha256": "d75dd3e95f6da2f7e7279327e8c246f0c551730e9903815db1e45270b04bfced",
+    "bytes": 5890
+  },
+  "artifact": {
+    "path": "C:\\Users\\Ganesh\\Desktop\\AIIot project\\docs\\diagrams\\agent-interaction.html",
+    "sha256": "ab64216d09dab5c7d40a8cb19bdd31fe0824f22c0ad0b5f5053a073de4d670bb",
+    "bytes": 852796
+  },
+  "gates": {
+    "validate": "pass",
+    "deliver": "pass",
+    "check": "pass",
+    "browser-check": "pass"
+  },
+  "diagnostics": [],
+  "diagnosticSummary": {
+    "total": 0,
+    "shown": 0,
+    "truncated": false
+  },
+  "evidence": {
+    "receipt": "C:\\Users\\Ganesh\\Desktop\\AIIot project\\.archify\\rev-agent2\\agent-interaction.finalize.json",
+    "summaryReceipt": "C:\\Users\\Ganesh\\Desktop\\AIIot project\\.archify\\rev-agent2\\agent-interaction.finalize-summary.json",
+    "browserCheckReceipt": "C:\\Users\\Ganesh\\Desktop\\AIIot project\\.archify\\rev-agent2\\agent-interaction.browser-check.json"
+  },
+  "visualReview": "not-requested",
+  "durationMs": 6098,
+  "browserCheck": {
+    "requested": true,
+    "ran": true
+  },
+  "visualReviewRecommendation": {
+    "action": "inspect-route-readability",
+    "signals": {
+      "routesOverSuggestedBends": 1
+    },
+    "reason": "Automated gates passed, but crossings or detours still need perceptual review before claiming visual quality.",
+    "affectedRoutes": {
+      "crossings": [],
+      "detours": [
+        {
+          "relationship": {
+            "id": "conn-pipeline-rule",
+            "from": "pipeline_comp",
+            "to": "rule_comp",
+            "label": "update(dets, ts)",
+            "collectionIndex": 4,
+            "artifactIndex": 5
+          },
+          "bends": 3,
+          "stretch": 1.338
+        }
+      ],
+      "truncated": false
+    },
+    "hints": [
+      "pipeline_comp → rule_comp needs 3 bends: move node pipeline_comp or rule_comp so they share a row or column with matching centers, or sit diagonally with a clear corner."
+    ],
+    "repair": "Trace these relationships at the desktop viewport. For Architecture, use references/architecture-layout-repair.md: reflow a blocked main path or tangled connected scene, and repair an isolated defect locally only when the surrounding composition is accepted. Preserve all semantic content and user-fixed geometry. Rerun finalize once after the edit."
+  }
+}

@@ -1,0 +1,78 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "Frame Ingestion & Anomaly Alert Sequence",
+    "output": "docs/diagrams/ingest-sequence.html",
+    "quality_profile": "showcase"
+  },
+  "participants": [
+    { "id": "edge", "type": "external", "label": "Edge Client", "sublabel": "edge/edge_client.py" },
+    { "id": "api", "type": "backend", "label": "FastAPI App", "sublabel": "server/app.py" },
+    { "id": "queue", "type": "messagebus", "label": "Frame Queue", "sublabel": "maxsize=8 drop-oldest" },
+    { "id": "worker", "type": "backend", "label": "Worker Thread", "sublabel": "server/worker.py" },
+    { "id": "onnx", "type": "cloud", "label": "YOLO26n ONNX", "sublabel": "server/detector.py" },
+    { "id": "engine", "type": "security", "label": "Pipeline & Rules", "sublabel": "pipeline.py + rules.py" },
+    { "id": "db", "type": "database", "label": "SQLite DB", "sublabel": "events.db (WAL)" },
+    { "id": "dash", "type": "frontend", "label": "React Console", "sublabel": "AnalyticsApp (:5173)" }
+  ],
+  "segments": [
+    { "from": 150, "to": 280, "label": "Authenticated Frame Ingest & Enqueue" },
+    { "from": 295, "to": 540, "label": "Worker Inference, Rule Evaluation & Metric Logging" },
+    { "from": 555, "to": 640, "label": "React Console REST Polling" }
+  ],
+  "messages": [
+    { "id": "m1", "from": "edge", "to": "api", "y": 160, "label": "POST /frames (JPEG, X-API-Key)", "variant": "emphasis" },
+    { "id": "m2", "from": "api", "to": "queue", "y": 195, "label": "put_nowait(device_id, ts, seq, body)", "variant": "default" },
+    { "id": "m3", "from": "queue", "to": "api", "y": 230, "label": "qsize() & dropped_oldest", "variant": "return" },
+    { "id": "m4", "from": "api", "to": "edge", "y": 265, "label": "202 Accepted {status, queue_depth}", "variant": "return" },
+    { "id": "m5", "from": "worker", "to": "queue", "y": 305, "label": "get(timeout=1.0)", "variant": "default" },
+    { "id": "m6", "from": "queue", "to": "worker", "y": 340, "label": "frame item", "variant": "return" },
+    { "id": "m7", "from": "worker", "to": "onnx", "y": 375, "label": "detect(frame_bgr)", "variant": "emphasis" },
+    { "id": "m8", "from": "onnx", "to": "worker", "y": 410, "label": "detections (conf >= 0.30)", "variant": "return" },
+    { "id": "m9", "from": "worker", "to": "engine", "y": 445, "label": "ingest_detections(device_id, ts, dets)", "variant": "emphasis" },
+    { "id": "m10", "from": "engine", "to": "db", "y": 480, "label": "insert_event() & insert_anomaly()", "variant": "default" },
+    { "id": "m11", "from": "worker", "to": "db", "y": 520, "label": "insert_frame_metric(bytes, inf_ms, e2e_ms)", "variant": "default" },
+    { "id": "m12", "from": "dash", "to": "api", "y": 565, "label": "GET /anomalies?limit=60 & /frames/latest", "variant": "default" },
+    { "id": "m13", "from": "api", "to": "dash", "y": 605, "label": "200 OK (JSON telemetry + annotated JPEG)", "variant": "return" }
+  ],
+  "activations": [
+    { "participant": "edge", "from": 155, "to": 270, "type": "external" },
+    { "participant": "api", "from": 160, "to": 268, "type": "backend" },
+    { "participant": "queue", "from": 190, "to": 345, "type": "messagebus" },
+    { "participant": "worker", "from": 300, "to": 530, "type": "backend" },
+    { "participant": "onnx", "from": 370, "to": 415, "type": "cloud" },
+    { "participant": "engine", "from": 440, "to": 495, "type": "security" },
+    { "participant": "db", "from": 475, "to": 530, "type": "database" },
+    { "participant": "dash", "from": 560, "to": 615, "type": "frontend" }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Non-Blocking 202 Ingestion",
+      "items": [
+        "POST /frames validates X-API-Key, Content-Length <= 2 MB, and JPEG SOF dimensions <= 4096x4096",
+        "Enqueues frame into bounded queue (evicting oldest if full) and returns HTTP 202 Accepted immediately",
+        "Edge client reads reported queue_depth without waiting for ONNX inference"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "Worker Inference & Pipeline Ingestion",
+      "items": [
+        "Worker thread decodes JPEG, runs YOLO26n ONNX (conf_stay=0.30), and calls pipeline.ingest_detections()",
+        "Pipeline logs debounced events, runs RuleEngine + Tracker, logs anomalies, and triggers alerts.fire()",
+        "Worker annotates frame with bounding boxes/alert border and writes frame_metrics to SQLite"
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "React Console Polling",
+      "items": [
+        "AnalyticsApp (:5173) polls /stats, /anomalies?limit=60, /events?limit=120, /devices, and /health every 650ms",
+        "Polls /frames/latest every 260ms using URL.createObjectURL blob swap for zero-flicker video",
+        "Displays active alert banner whenever an anomaly occurred within the last 15 seconds"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,212 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Runtime Component Collaboration & Responsibilities",
+    "output": "docs/diagrams/agent-interaction.html",
+    "quality_profile": "showcase"
+  },
+  "components": [
+    {
+      "id": "edge_comp",
+      "type": "backend",
+      "label": "Edge Capture Client",
+      "sublabel": "edge_client.py & controller.py",
+      "tag": "Resize & 5 FPS Stream",
+      "pos": [40, 220],
+      "size": [155, 60]
+    },
+    {
+      "id": "console_comp",
+      "type": "frontend",
+      "label": "React Consoles",
+      "sublabel": "frontend/ (:5173 & :5174)",
+      "tag": "Analytics & Edge UI",
+      "pos": [40, 360],
+      "size": [155, 60]
+    },
+    {
+      "id": "gateway_comp",
+      "type": "backend",
+      "label": "Ingest API Gateway",
+      "sublabel": "server/app.py (FastAPI)",
+      "tag": "Auth, Gate & Queue",
+      "pos": [260, 220],
+      "size": [150, 60]
+    },
+    {
+      "id": "worker_comp",
+      "type": "backend",
+      "label": "CV Worker Thread",
+      "sublabel": "server/worker.py",
+      "tag": "Dequeue & Annotate",
+      "pos": [465, 220],
+      "size": [150, 60]
+    },
+    {
+      "id": "detector_comp",
+      "type": "cloud",
+      "label": "ONNX Detector",
+      "sublabel": "server/detector.py",
+      "tag": "YOLO26n (27.6ms)",
+      "pos": [465, 80],
+      "size": [150, 60]
+    },
+    {
+      "id": "pipeline_comp",
+      "type": "backend",
+      "label": "Pipeline Coordinator",
+      "sublabel": "server/pipeline.py",
+      "tag": "Debounce & Lock",
+      "pos": [675, 220],
+      "size": [150, 60]
+    },
+    {
+      "id": "rule_comp",
+      "type": "security",
+      "label": "Rule Engine",
+      "sublabel": "server/rules.py",
+      "tag": "R1 / R2 / R3 Eval",
+      "pos": [885, 220],
+      "size": [150, 60]
+    },
+    {
+      "id": "tracker_comp",
+      "type": "backend",
+      "label": "Centroid Tracker",
+      "sublabel": "server/tracker.py",
+      "tag": "Owner & IoU (15s)",
+      "pos": [885, 80],
+      "size": [150, 60]
+    },
+    {
+      "id": "actuator_comp",
+      "type": "security",
+      "label": "Alert Dispatcher",
+      "sublabel": "server/alerts.py",
+      "tag": "Beep / Banner / Flag",
+      "pos": [885, 360],
+      "size": [150, 60]
+    },
+    {
+      "id": "storage_comp",
+      "type": "database",
+      "label": "SQLite WAL Store",
+      "sublabel": "server/db.py",
+      "tag": "events / metrics",
+      "pos": [675, 360],
+      "size": [150, 60]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "security-group",
+      "label": "Edge Capture Plane",
+      "wraps": ["edge_comp"]
+    },
+    {
+      "kind": "region",
+      "label": "Server Processing & Decision Core",
+      "wraps": ["gateway_comp", "worker_comp", "detector_comp", "pipeline_comp", "rule_comp", "tracker_comp", "actuator_comp", "storage_comp"]
+    },
+    {
+      "kind": "security-group",
+      "label": "Operator UI Plane",
+      "wraps": ["console_comp"]
+    }
+  ],
+  "connections": [
+    {
+      "id": "conn-edge-gateway",
+      "from": "edge_comp",
+      "to": "gateway_comp",
+      "label": "POST /frames",
+      "variant": "emphasis"
+    },
+    {
+      "id": "conn-gateway-worker",
+      "from": "gateway_comp",
+      "to": "worker_comp",
+      "label": "frame_queue",
+      "variant": "default"
+    },
+    {
+      "id": "conn-worker-detector",
+      "from": "worker_comp",
+      "to": "detector_comp",
+      "label": "detect(frame)",
+      "variant": "default"
+    },
+    {
+      "id": "conn-worker-pipeline",
+      "from": "worker_comp",
+      "to": "pipeline_comp",
+      "label": "ingest_detections",
+      "variant": "emphasis"
+    },
+    {
+      "id": "conn-pipeline-rule",
+      "from": "pipeline_comp",
+      "to": "rule_comp",
+      "label": "update(dets, ts)",
+      "variant": "emphasis"
+    },
+    {
+      "id": "conn-rule-tracker",
+      "from": "rule_comp",
+      "to": "tracker_comp",
+      "label": "update tracks",
+      "variant": "default"
+    },
+    {
+      "id": "conn-pipeline-storage",
+      "from": "pipeline_comp",
+      "to": "storage_comp",
+      "label": "insert WAL",
+      "variant": "default"
+    },
+    {
+      "id": "conn-pipeline-actuator",
+      "from": "pipeline_comp",
+      "to": "actuator_comp",
+      "label": "alerts.fire()",
+      "variant": "security"
+    },
+    {
+      "id": "conn-gateway-console",
+      "from": "gateway_comp",
+      "to": "console_comp",
+      "label": "GET /stats /frames",
+      "variant": "default"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Ingestion & Perception Components",
+      "items": [
+        "Edge Capture Client: Captures frames, resizes to 640px, encodes JPEG (q=70), and streams POST /frames.",
+        "Ingest API Gateway: Enforces X-API-Key, Content-Length <= 2 MB, JPEG SOF <= 4096px, and drop-oldest queue.",
+        "CV Worker & ONNX Detector: Dequeues frames, runs YOLO26n ONNX in 27.6ms on CPU, and renders annotated JPEGs."
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "Pipeline, Rule Engine & Tracker",
+      "items": [
+        "Pipeline Coordinator: Serializes per-device state under ingest_lock and debounces event logging (2s).",
+        "Rule Engine: Evaluates R1 crowd spikes (>3), R2 unexpected objects (>=5s), and R3 dwell (>=30s) per track_id.",
+        "Centroid Tracker: Tracks objects (15s timeout, 0.40/0.30 hysteresis) and binds initial nearby person as owner."
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "Actuation, Storage & React Consoles",
+      "items": [
+        "Alert Dispatcher: Triggers console banner, platform beep, and 15s active alert flag for red frame border.",
+        "SQLite WAL Store: Persists events, anomalies, and frame_metrics in events.db with 5000ms busy_timeout.",
+        "React Consoles: Analytics Console (:5173) and Edge Control Deck (:5174) poll REST endpoints."
+      ]
+    }
+  ]
+}

@@ -1,0 +1,69 @@
+{
+  "schema_version": 1,
+  "diagram_type": "dataflow",
+  "meta": {
+    "title": "Edge-to-Server CV Pipeline Data Flow",
+    "output": "docs/diagrams/pipeline-dataflow.html",
+    "quality_profile": "showcase"
+  },
+  "stages": [
+    { "label": "Capture" },
+    { "label": "Transport" },
+    { "label": "Inference" },
+    { "label": "Tracking & Rules" },
+    { "label": "Storage & Alerts" }
+  ],
+  "nodes": [
+    { "id": "cam", "type": "external", "label": "Video Source", "sublabel": "capture.py", "stage": 0, "row": 0, "tag": "BGR ndarray" },
+    { "id": "sim_source", "type": "external", "label": "Simulator CLI", "sublabel": "scripts/simulator.py", "stage": 0, "row": 2, "tag": "DetectionEvent" },
+    { "id": "edge_proc", "type": "cloud", "label": "Edge Streamer", "sublabel": "Resize & JPEG", "stage": 1, "row": 0, "tag": "5 FPS, q=70" },
+    { "id": "api_ingest", "type": "backend", "label": "FastAPI Gateway", "sublabel": "server/app.py", "stage": 1, "row": 1, "tag": "HTTP :8000" },
+    { "id": "queue_node", "type": "messagebus", "label": "Bounded Queue", "sublabel": "drop-oldest (8)", "stage": 2, "row": 0, "tag": "frame_queue" },
+    { "id": "onnx_head", "type": "backend", "label": "YOLO26n ONNX", "sublabel": "server/detector.py", "stage": 2, "row": 1, "tag": "27.6ms CPU" },
+    { "id": "tracker_node", "type": "backend", "label": "Owner Tracker", "sublabel": "server/tracker.py", "stage": 3, "row": 0, "tag": "15s timeout" },
+    { "id": "rule_node", "type": "security", "label": "Pipeline & Rules", "sublabel": "pipeline.py + rules.py", "stage": 3, "row": 1, "tag": "R1 / R2 / R3" },
+    { "id": "sqlite_store", "type": "database", "label": "SQLite WAL DB", "sublabel": "events.db", "stage": 4, "row": 0, "tag": "3 tables" },
+    { "id": "alerts_bus", "type": "security", "label": "Alerts & Overlay", "sublabel": "alerts.py + worker.py", "stage": 4, "row": 1, "tag": "JPEG + beep" }
+  ],
+  "flows": [
+    { "id": "f-cam-edge", "from": "cam", "to": "edge_proc", "label": "raw BGR", "variant": "default" },
+    { "id": "f-edge-api", "from": "edge_proc", "to": "api_ingest", "label": "POST /frames", "variant": "emphasis" },
+    { "id": "f-sim-api", "from": "sim_source", "to": "api_ingest", "label": "POST /events", "variant": "dashed" },
+    { "id": "f-api-queue", "from": "api_ingest", "to": "queue_node", "label": "validated JPEG", "variant": "default" },
+    { "id": "f-queue-onnx", "from": "queue_node", "to": "onnx_head", "label": "imdecode BGR", "variant": "default" },
+    { "id": "f-onnx-tracker", "from": "onnx_head", "to": "tracker_node", "label": "boxes >=0.30", "variant": "emphasis" },
+    { "id": "f-api-rules", "from": "api_ingest", "to": "rule_node", "label": "injected JSON", "variant": "dashed" },
+    { "id": "f-tracker-rules", "from": "tracker_node", "to": "rule_node", "label": "active tracks", "variant": "emphasis" },
+    { "id": "f-rules-db", "from": "rule_node", "to": "sqlite_store", "label": "WAL inserts", "variant": "default" },
+    { "id": "f-rules-alerts", "from": "rule_node", "to": "alerts_bus", "label": "fire anomalies", "variant": "security" }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Dual Ingestion Paths",
+      "items": [
+        "Camera path: BGR frames resized to 640px and JPEG-compressed (~25KB) -> POST /frames -> frame_queue -> YOLO26n",
+        "Direct injection seam: POST /events bypasses frame_queue and ONNX detector, calling pipeline.ingest_detections() directly",
+        "Both paths share identical debouncing, tracking, rule evaluation, SQLite logging, and alert dispatch"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "Tensor Inference to Owner-Bound Tracks",
+      "items": [
+        "YOLO26n letterboxes BGR to (1,3,640,640) float32 tensor and outputs (1,300,6) normalized boxes in 27.6ms",
+        "Tracker applies confidence hysteresis (enter >= 0.40, stay >= 0.30) and retains occluded tracks for 15s",
+        "Binds initial nearby person as owner_id; resets unattended timer on owner return or stationary person >= 2s"
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "Rule Evaluation to Storage & Annotated Stream",
+      "items": [
+        "RuleEngine evaluates R1 (>3 persons), R2 (>=5s presence), and R3 (>=30s unattended) with per-track cooldown",
+        "SQLite WAL stores events, anomalies, and frame_metrics for non-blocking dashboard queries",
+        "Worker renders bounding boxes and red ALERT ACTIVE border into latest_frames[device_id]"
+      ]
+    }
+  ]
+}

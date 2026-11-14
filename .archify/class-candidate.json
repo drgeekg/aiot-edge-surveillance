@@ -1,0 +1,210 @@
+{
+  "schema_version": 1,
+  "diagram_type": "class",
+  "meta": {
+    "title": "Edge Anomaly Detection Object Model",
+    "output": "docs/diagrams/object-model.html",
+    "quality_profile": "showcase"
+  },
+  "layout": {
+    "mode": "grid"
+  },
+  "types": [
+    {
+      "id": "video_source",
+      "label": "VideoSource",
+      "kind": "class",
+      "sublabel": "edge/capture.py",
+      "row": 0,
+      "col": 0,
+      "attributes": [
+        { "name": "raw_src", "type": "str | int", "visibility": "public" },
+        { "name": "source_kind", "type": "str", "visibility": "public" },
+        { "name": "cap", "type": "VideoCapture", "visibility": "public" }
+      ],
+      "methods": [
+        { "name": "read", "returns": "ndarray | None", "visibility": "public" },
+        { "name": "release", "returns": "None", "visibility": "public" }
+      ]
+    },
+    {
+      "id": "edge_controller",
+      "label": "EdgeEmitterController",
+      "kind": "class",
+      "sublabel": "edge/controller.py",
+      "row": 1,
+      "col": 0,
+      "attributes": [
+        { "name": "server_url", "type": "str", "visibility": "public" },
+        { "name": "cfg", "type": "dict", "visibility": "public" },
+        { "name": "latest_jpeg", "type": "bytes | None", "visibility": "public" }
+      ],
+      "methods": [
+        { "name": "start", "returns": "None", "visibility": "public" },
+        { "name": "stop", "returns": "None", "visibility": "public" },
+        { "name": "update_config", "parameters": "updates: dict", "returns": "dict", "visibility": "public" },
+        { "name": "get_status", "returns": "dict", "visibility": "public" }
+      ]
+    },
+    {
+      "id": "onnx_detector",
+      "label": "ONNXRuntimeDetector",
+      "kind": "class",
+      "sublabel": "server/detector.py",
+      "row": 0,
+      "col": 1,
+      "attributes": [
+        { "name": "model_path", "type": "str", "visibility": "public" },
+        { "name": "conf", "type": "float", "visibility": "public" },
+        { "name": "session", "type": "InferenceSession", "visibility": "public" }
+      ],
+      "methods": [
+        { "name": "detect", "parameters": "frame_bgr: ndarray", "returns": "List[dict]", "visibility": "public" }
+      ]
+    },
+    {
+      "id": "device_state",
+      "label": "DeviceState",
+      "kind": "record",
+      "sublabel": "server/pipeline.py (@dataclass)",
+      "row": 1,
+      "col": 1,
+      "attributes": [
+        { "name": "device_id", "type": "str", "visibility": "public" },
+        { "name": "rule_engine", "type": "RuleEngine", "visibility": "public" },
+        { "name": "last_seen", "type": "float", "visibility": "public" },
+        { "name": "frames_received", "type": "int", "visibility": "public" },
+        { "name": "last_logged_by_class", "type": "Dict[str, float]", "visibility": "public" }
+      ]
+    },
+    {
+      "id": "rule_engine",
+      "label": "RuleEngine",
+      "kind": "class",
+      "sublabel": "server/rules.py",
+      "row": 0,
+      "col": 2,
+      "attributes": [
+        { "name": "person_threshold", "type": "int", "visibility": "public" },
+        { "name": "unexpected_seconds", "type": "float", "visibility": "public" },
+        { "name": "dwell_seconds", "type": "float", "visibility": "public" },
+        { "name": "tracker", "type": "Tracker", "visibility": "public" },
+        { "name": "last_fired", "type": "Dict[object, float]", "visibility": "public" }
+      ],
+      "methods": [
+        { "name": "update", "parameters": "detections: List[dict], ts: float", "returns": "List[Anomaly]", "visibility": "public" },
+        { "name": "_can_fire", "parameters": "key: object, ts: float", "returns": "bool", "visibility": "private" },
+        { "name": "_emit", "parameters": "out, rule, detail, sev, ts, track_id", "returns": "None", "visibility": "private" }
+      ]
+    },
+    {
+      "id": "tracker_cls",
+      "label": "Tracker",
+      "kind": "class",
+      "sublabel": "server/tracker.py",
+      "row": 1,
+      "col": 2,
+      "attributes": [
+        { "name": "track_timeout", "type": "float", "visibility": "public" },
+        { "name": "owner_radius", "type": "float", "visibility": "public" },
+        { "name": "conf_enter", "type": "float", "visibility": "public" },
+        { "name": "conf_stay", "type": "float", "visibility": "public" },
+        { "name": "tracks", "type": "Dict[str, List[Track]]", "visibility": "public" },
+        { "name": "person_tracks", "type": "List[Track]", "visibility": "public" }
+      ],
+      "methods": [
+        { "name": "update", "parameters": "detections: List[dict], ts: float", "returns": "List[Track]", "visibility": "public" },
+        { "name": "_update_person_tracks", "parameters": "person_dets, ts", "returns": "List[Track]", "visibility": "private" }
+      ]
+    },
+    {
+      "id": "track_dto",
+      "label": "Track",
+      "kind": "record",
+      "sublabel": "server/tracker.py (@dataclass)",
+      "row": 2,
+      "col": 2,
+      "attributes": [
+        { "name": "class_name", "type": "str", "visibility": "public" },
+        { "name": "first_seen", "type": "float", "visibility": "public" },
+        { "name": "last_seen", "type": "float", "visibility": "public" },
+        { "name": "box", "type": "Box", "visibility": "public" },
+        { "name": "anchor_box", "type": "Box", "visibility": "public" },
+        { "name": "last_person_near_ts", "type": "float", "visibility": "public" },
+        { "name": "track_id", "type": "int", "visibility": "public" },
+        { "name": "owner_id", "type": "Optional[int]", "visibility": "public" }
+      ]
+    },
+    {
+      "id": "anomaly_dto",
+      "label": "Anomaly",
+      "kind": "record",
+      "sublabel": "server/rules.py (@dataclass)",
+      "row": 2,
+      "col": 1,
+      "attributes": [
+        { "name": "rule", "type": "str", "visibility": "public" },
+        { "name": "detail", "type": "str", "visibility": "public" },
+        { "name": "severity", "type": "str", "visibility": "public" },
+        { "name": "ts", "type": "float", "visibility": "public" }
+      ]
+    }
+  ],
+  "relationships": [
+    {
+      "id": "rel-ctrl-vs",
+      "from": "edge_controller",
+      "to": "video_source",
+      "kind": "dependency",
+      "label": "captures frames"
+    },
+    {
+      "id": "rel-dev-rules",
+      "from": "device_state",
+      "to": "rule_engine",
+      "kind": "composition",
+      "label": "owns per-device"
+    },
+    {
+      "id": "rel-rules-tracker",
+      "from": "rule_engine",
+      "to": "tracker_cls",
+      "kind": "composition",
+      "label": "delegates tracking"
+    },
+    {
+      "id": "rel-rules-anomaly",
+      "from": "rule_engine",
+      "to": "anomaly_dto",
+      "kind": "dependency",
+      "label": "emits"
+    },
+    {
+      "id": "rel-tracker-track",
+      "from": "tracker_cls",
+      "to": "track_dto",
+      "kind": "composition",
+      "label": "maintains"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Exact Codebase Classes & Dataclasses",
+      "items": [
+        "Edge classes: VideoSource (edge/capture.py) and EdgeEmitterController (edge/controller.py)",
+        "Server classes: ONNXRuntimeDetector (detector.py), RuleEngine (rules.py), and Tracker (tracker.py)",
+        "Dataclasses: DeviceState (pipeline.py), Track (tracker.py), and Anomaly (rules.py)"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "Per-Device Isolation & Pure Domain Model",
+      "items": [
+        "Each edge device_id gets its own DeviceState -> RuleEngine -> Tracker instance in pipeline.devices",
+        "Track stores track_id and owner_id for owner-bound dwell resets and per-track rule cooldowns",
+        "Procedural modules (app.py, worker.py, pipeline.py, db.py, alerts.py) coordinate I/O around these types"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,95 @@
+{
+  "schema_version": 1,
+  "diagram_type": "waterfall",
+  "meta": {
+    "title": "Edge-to-Server Frame Latency Waterfall (80.93ms Measured E2E)",
+    "output": "docs/diagrams/frame-latency.html",
+    "evidence": "illustrative",
+    "unit": "ms",
+    "quality_profile": "showcase"
+  },
+  "spans": [
+    {
+      "id": "e2e_measured",
+      "name": "Capture Timestamp to Annotated Frame Ready [measured: 80.93ms avg]",
+      "service": "pipeline",
+      "start": 0,
+      "end": 80.93,
+      "detail": "Measured avg e2e_ms = 80.93ms from events.db (298 frames over 60s at 640px, 5 FPS, q=70, edge-01)."
+    },
+    {
+      "id": "net_post",
+      "name": "HTTP POST /frames & Security Gate [estimated]",
+      "service": "server_app",
+      "start": 0,
+      "duration": 6.5,
+      "parent": "e2e_measured",
+      "detail": "Estimated ~6.5ms loopback HTTP transfer + X-API-Key, Content-Length, and JPEG SOF dimension check."
+    },
+    {
+      "id": "queue_wait",
+      "name": "Bounded Queue Wait Time [estimated]",
+      "service": "frame_queue",
+      "start": 6.5,
+      "duration": 2.5,
+      "parent": "e2e_measured",
+      "detail": "Estimated ~2.5ms dwell in frame_queue (maxsize=8) before worker thread dequeue."
+    },
+    {
+      "id": "decode_frame",
+      "name": "Worker cv2.imdecode [estimated]",
+      "service": "server_worker",
+      "start": 9.0,
+      "duration": 3.0,
+      "parent": "e2e_measured",
+      "detail": "Estimated ~3.0ms JPEG decompression to BGR numpy ndarray."
+    },
+    {
+      "id": "onnx_inference",
+      "name": "YOLO26n ONNX CPU Inference [measured: 59.19ms avg]",
+      "service": "onnxruntime",
+      "start": 12.0,
+      "duration": 59.19,
+      "parent": "e2e_measured",
+      "detail": "Measured avg inference_ms = 59.19ms from events.db (298 frames over 60s at 640px, 5 FPS, q=70)."
+    },
+    {
+      "id": "ingest_rules",
+      "name": "Debounce, Owner Tracker & Rules R1/R2/R3 [estimated]",
+      "service": "server_pipeline",
+      "start": 71.19,
+      "duration": 3.74,
+      "parent": "e2e_measured",
+      "detail": "Estimated ~3.74ms for pipeline.ingest_detections(): SQLite event insert + Tracker + RuleEngine."
+    },
+    {
+      "id": "annotate_frame",
+      "name": "Frame Annotation JPEG Encode [estimated]",
+      "service": "server_worker",
+      "start": 74.93,
+      "duration": 6.0,
+      "parent": "e2e_measured",
+      "detail": "Estimated ~6.0ms for _annotate_frame() (cv2.imencode q=80) before e2e_ms timestamp is recorded."
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Queried from events.db (60s @ 640px, 5 FPS, q=70)",
+      "items": [
+        "Measured avg inference_ms: 59.19ms across 298 frames in events.db",
+        "Measured avg e2e_ms: 80.93ms across 298 frames in events.db",
+        "All other sub-spans (HTTP POST, queue wait, imdecode, rules/SQLite, annotation) are estimated (~21.74ms combined)"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "Unmeasured Outside e2e_ms Window [estimated]",
+      "items": [
+        "Pre-capture_ts edge VideoSource.read() + cv2.resize(640) + cv2.imencode(q=70): estimated ~10-12ms",
+        "Post-e2e_ms db.insert_frame_metric() WAL commit: estimated ~1-2ms",
+        "Doc claimed 27.6ms inference / 67.0ms E2E; live 60s run measured 59.19ms inference / 80.93ms E2E"
+      ]
+    }
+  ]
+}

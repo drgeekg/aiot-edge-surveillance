@@ -1,0 +1,41 @@
+{
+  "schemaVersion": 1,
+  "ok": true,
+  "command": "finalize",
+  "status": "pass",
+  "type": "sequence",
+  "quality": "showcase",
+  "specification": {
+    "path": "C:\\Users\\Ganesh\\Desktop\\AIIot project\\.archify\\sequence-candidate.json",
+    "sha256": "570fe5b576a7b4de145fab3e79b290bf2ac5e82ca79f6b4aa1d6c17f05cc83bc",
+    "bytes": 4875
+  },
+  "artifact": {
+    "path": "C:\\Users\\Ganesh\\Desktop\\AIIot project\\docs\\diagrams\\ingest-sequence.html",
+    "sha256": "bc509148f03c2684bc17f485bc81eb160725b291fd20291a361e4707b3096071",
+    "bytes": 844942
+  },
+  "gates": {
+    "validate": "pass",
+    "deliver": "pass",
+    "check": "pass",
+    "browser-check": "pass"
+  },
+  "diagnostics": [],
+  "diagnosticSummary": {
+    "total": 0,
+    "shown": 0,
+    "truncated": false
+  },
+  "evidence": {
+    "receipt": "C:\\Users\\Ganesh\\Desktop\\AIIot project\\.archify\\rev-seq\\ingest-sequence.finalize.json",
+    "summaryReceipt": "C:\\Users\\Ganesh\\Desktop\\AIIot project\\.archify\\rev-seq\\ingest-sequence.finalize-summary.json",
+    "browserCheckReceipt": "C:\\Users\\Ganesh\\Desktop\\AIIot project\\.archify\\rev-seq\\ingest-sequence.browser-check.json"
+  },
+  "visualReview": "not-requested",
+  "durationMs": 6705,
+  "browserCheck": {
+    "requested": true,
+    "ran": true
+  }
+}

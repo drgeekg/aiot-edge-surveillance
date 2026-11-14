@@ -1,0 +1,1468 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Codebase Reference Explorer · Edge-to-Server Anomaly Detection</title>
+  <style>
+    :root {
+      --bg: #0f0b08;
+      --bg-elev: #18120e;
+      --bg-card: #1f1712;
+      --bg-hover: #291f18;
+      --border: rgba(246, 237, 228, 0.12);
+      --border-strong: rgba(216, 143, 86, 0.36);
+      --text: #f5ede5;
+      --text-muted: #b6a08d;
+      --text-soft: #8f7967;
+      --accent: #e49b62;
+      --accent-bg: rgba(228, 155, 98, 0.14);
+      --green: #6bc294;
+      --green-bg: rgba(107, 194, 148, 0.14);
+      --amber: #eab044;
+      --amber-bg: rgba(234, 176, 68, 0.14);
+      --blue: #7ab3ef;
+      --blue-bg: rgba(122, 179, 239, 0.14);
+      --purple: #c59cf5;
+      --purple-bg: rgba(197, 156, 245, 0.14);
+      --red: #ee7564;
+      --red-bg: rgba(238, 117, 100, 0.15);
+      --code-bg: #120d0a;
+      --shadow: 0 12px 30px rgba(0, 0, 0, 0.42);
+      --mono: ui-monospace, "Cascadia Code", "JetBrains Mono", Menlo, Consolas, monospace;
+      --sans: system-ui, -apple-system, "Segoe UI", Roboto, "Plus Jakarta Sans", sans-serif;
+    }
+
+    [data-theme="light"] {
+      --bg: #f8f5f1;
+      --bg-elev: #ffffff;
+      --bg-card: #ffffff;
+      --bg-hover: #f2ebe3;
+      --border: rgba(45, 30, 18, 0.12);
+      --border-strong: rgba(176, 98, 42, 0.36);
+      --text: #20160f;
+      --text-muted: #5a4636;
+      --text-soft: #7f6b5a;
+      --accent: #b35c1e;
+      --accent-bg: rgba(179, 92, 30, 0.1);
+      --green: #1f7a4c;
+      --green-bg: rgba(31, 122, 76, 0.1);
+      --amber: #9c6607;
+      --amber-bg: rgba(156, 102, 7, 0.1);
+      --blue: #1e5fa8;
+      --blue-bg: rgba(30, 95, 168, 0.1);
+      --purple: #6b3ca8;
+      --purple-bg: rgba(107, 60, 168, 0.1);
+      --red: #b42e20;
+      --red-bg: rgba(180, 46, 32, 0.1);
+      --code-bg: #f3ede6;
+      --shadow: 0 8px 24px rgba(32, 22, 15, 0.08);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--sans);
+      line-height: 1.55;
+      min-height: 100vh;
+    }
+
+    a { color: var(--accent); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    code {
+      font-family: var(--mono);
+      font-size: 0.85em;
+      background: var(--code-bg);
+      padding: 0.12em 0.42em;
+      border-radius: 5px;
+      border: 1px solid var(--border);
+    }
+
+    .topbar {
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      background: var(--bg-elev);
+      border-bottom: 1px solid var(--border);
+      padding: 0.75rem 1.25rem;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 0.85rem;
+      justify-content: space-between;
+      box-shadow: var(--shadow);
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+    .brand-badge {
+      padding: 0.2rem 0.55rem;
+      border-radius: 999px;
+      font-size: 0.72rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      background: var(--green-bg);
+      color: var(--green);
+      border: 1px solid rgba(107, 194, 148, 0.35);
+    }
+    .brand h1 { font-size: 1.08rem; font-weight: 700; letter-spacing: -0.01em; }
+    .brand-sub { font-size: 0.78rem; color: var(--text-soft); }
+
+    .controls {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 0.6rem;
+      flex: 1;
+      justify-content: flex-end;
+    }
+
+    .search-wrap {
+      position: relative;
+      min-width: 260px;
+      max-width: 420px;
+      flex: 1;
+    }
+    .search-input {
+      width: 100%;
+      padding: 0.48rem 2.4rem 0.48rem 0.85rem;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      background: var(--code-bg);
+      color: var(--text);
+      font-family: var(--mono);
+      font-size: 0.82rem;
+      outline: none;
+    }
+    .search-input:focus { border-color: var(--accent); }
+    .search-kbd {
+      position: absolute;
+      right: 0.55rem;
+      top: 50%;
+      transform: translateY(-50%);
+      font-family: var(--mono);
+      font-size: 0.7rem;
+      color: var(--text-soft);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 0.05rem 0.35rem;
+      pointer-events: none;
+    }
+
+    .nav-links {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 0.45rem;
+    }
+    .pill-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      padding: 0.42rem 0.75rem;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      background: var(--bg-card);
+      color: var(--text);
+      font-size: 0.78rem;
+      font-weight: 600;
+      cursor: pointer;
+      text-decoration: none;
+    }
+    .pill-btn:hover { border-color: var(--border-strong); background: var(--bg-hover); text-decoration: none; }
+    .pill-btn.active { background: var(--accent-bg); border-color: var(--border-strong); color: var(--accent); }
+
+    .layout {
+      display: grid;
+      grid-template-columns: 300px minmax(0, 1fr);
+      min-height: calc(100vh - 64px);
+    }
+
+    @media (max-width: 960px) {
+      .layout { grid-template-columns: 1fr; }
+      .sidebar { position: static !important; max-height: none !important; border-right: none !important; border-bottom: 1px solid var(--border); }
+    }
+
+    .sidebar {
+      position: sticky;
+      top: 62px;
+      align-self: start;
+      max-height: calc(100vh - 62px);
+      overflow-y: auto;
+      background: var(--bg-elev);
+      border-right: 1px solid var(--border);
+      padding: 1rem 0.85rem 2rem;
+    }
+
+    .layer-group { margin-bottom: 1.15rem; }
+    .layer-title {
+      font-size: 0.7rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--text-soft);
+      padding: 0.25rem 0.5rem;
+      margin-bottom: 0.3rem;
+      display: flex;
+      justify-content: space-between;
+    }
+
+    .side-file {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0.38rem 0.55rem;
+      border-radius: 7px;
+      font-family: var(--mono);
+      font-size: 0.78rem;
+      color: var(--text-muted);
+      cursor: pointer;
+      border: 1px solid transparent;
+    }
+    .side-file:hover { background: var(--bg-hover); color: var(--text); text-decoration: none; }
+    .side-file.active { background: var(--accent-bg); border-color: var(--border-strong); color: var(--accent); font-weight: 600; }
+    .side-count {
+      font-size: 0.68rem;
+      padding: 0.05rem 0.4rem;
+      border-radius: 999px;
+      background: var(--code-bg);
+      color: var(--text-soft);
+    }
+
+    .side-syms {
+      padding-left: 0.7rem;
+      margin: 0.15rem 0 0.4rem;
+      border-left: 1px dashed var(--border);
+    }
+    .side-sym {
+      display: block;
+      padding: 0.18rem 0.45rem;
+      font-family: var(--mono);
+      font-size: 0.72rem;
+      color: var(--text-soft);
+      border-radius: 5px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .side-sym:hover { background: var(--bg-hover); color: var(--text); text-decoration: none; }
+
+    .main {
+      padding: 1.5rem 2rem 4rem;
+      max-width: 1180px;
+      width: 100%;
+    }
+
+    .summary-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(185px, 1fr));
+      gap: 0.85rem;
+      margin-bottom: 1.35rem;
+    }
+    .stat-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 0.85rem 1rem;
+    }
+    .stat-label { font-size: 0.71rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-soft); font-weight: 700; }
+    .stat-val { font-family: var(--mono); font-size: 1.45rem; font-weight: 700; margin-top: 0.2rem; }
+    .stat-note { font-size: 0.75rem; color: var(--text-muted); margin-top: 0.15rem; }
+
+    .filter-bar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.45rem;
+      margin-bottom: 1.35rem;
+      align-items: center;
+    }
+
+    .file-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      margin-bottom: 1.35rem;
+      overflow: hidden;
+      box-shadow: var(--shadow);
+    }
+
+    .file-header {
+      padding: 1rem 1.25rem;
+      background: var(--bg-elev);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      flex-wrap: wrap;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 0.75rem;
+    }
+
+    .file-path {
+      font-family: var(--mono);
+      font-size: 1.05rem;
+      font-weight: 700;
+      color: var(--accent);
+    }
+    .file-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.4rem;
+      align-items: center;
+    }
+    .tag {
+      display: inline-block;
+      font-family: var(--mono);
+      font-size: 0.7rem;
+      font-weight: 600;
+      padding: 0.14rem 0.5rem;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+      background: var(--code-bg);
+    }
+    .tag-backend { background: var(--blue-bg); color: var(--blue); border-color: rgba(122, 179, 239, 0.3); }
+    .tag-edge { background: var(--amber-bg); color: var(--amber); border-color: rgba(234, 176, 68, 0.3); }
+    .tag-frontend { background: var(--purple-bg); color: var(--purple); border-color: rgba(197, 156, 245, 0.3); }
+    .tag-tooling { background: var(--green-bg); color: var(--green); border-color: rgba(107, 194, 148, 0.3); }
+
+    .file-body { padding: 1rem 1.25rem 1.25rem; }
+    .file-role { font-size: 0.92rem; color: var(--text); margin-bottom: 0.55rem; }
+    .file-deps { font-size: 0.8rem; color: var(--text-muted); margin-bottom: 0.95rem; }
+
+    .sym-list { display: grid; gap: 0.7rem; }
+    .sym-card {
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 0.78rem 0.95rem;
+      background: var(--bg);
+      transition: border-color 0.15s ease;
+    }
+    .sym-card:hover { border-color: var(--border-strong); }
+    .sym-head {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.5rem;
+      margin-bottom: 0.38rem;
+    }
+    .sym-name {
+      font-family: var(--mono);
+      font-size: 0.9rem;
+      font-weight: 700;
+      color: var(--text);
+    }
+    .sym-badges { display: flex; gap: 0.35rem; align-items: center; }
+    .kind-badge {
+      font-family: var(--mono);
+      font-size: 0.67rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      padding: 0.1rem 0.45rem;
+      border-radius: 5px;
+    }
+    .kind-endpoint { background: var(--green-bg); color: var(--green); }
+    .kind-class { background: var(--purple-bg); color: var(--purple); }
+    .kind-method, .kind-function { background: var(--blue-bg); color: var(--blue); }
+    .kind-component, .kind-hook { background: var(--accent-bg); color: var(--accent); }
+    .kind-config, .kind-test { background: var(--amber-bg); color: var(--amber); }
+
+    .sym-sig {
+      font-family: var(--mono);
+      font-size: 0.78rem;
+      color: var(--text-muted);
+      background: var(--code-bg);
+      padding: 0.35rem 0.6rem;
+      border-radius: 6px;
+      border: 1px solid var(--border);
+      margin-bottom: 0.45rem;
+      overflow-x: auto;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+    .sym-desc { font-size: 0.87rem; color: var(--text); margin-bottom: 0.35rem; }
+    .sym-io { font-size: 0.79rem; color: var(--text-muted); }
+    .sym-io strong { color: var(--text-soft); font-weight: 600; }
+
+    .diagram-drawer {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1rem 1.2rem;
+      margin-bottom: 1.35rem;
+    }
+    .diagram-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+      gap: 0.55rem;
+      margin-top: 0.7rem;
+    }
+    .diagram-link {
+      display: block;
+      padding: 0.55rem 0.7rem;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      background: var(--bg);
+      font-size: 0.8rem;
+      color: var(--text);
+    }
+    .diagram-link:hover { border-color: var(--border-strong); background: var(--bg-hover); text-decoration: none; }
+    .diagram-link span { display: block; font-size: 0.71rem; color: var(--text-soft); font-family: var(--mono); }
+
+    .empty-state {
+      text-align: center;
+      padding: 3rem 1rem;
+      color: var(--text-muted);
+      border: 1px dashed var(--border);
+      border-radius: 12px;
+    }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <div>
+        <div style="display:flex;align-items:center;gap:0.55rem;">
+          <h1>Codebase File &amp; Function Explorer</h1>
+          <span class="brand-badge">100% Documented</span>
+        </div>
+        <div class="brand-sub">Backend (<code>server/</code>) · Edge (<code>edge/</code>) · Frontend (<code>frontend/</code>) · Scripts &amp; Tests</div>
+      </div>
+    </div>
+
+    <div class="controls">
+      <div class="search-wrap">
+        <input id="searchInput" class="search-input" type="search" placeholder="Search file, function, /endpoint, rule (R1/H2/P8)..." aria-label="Search files and functions" />
+        <span class="search-kbd">/</span>
+      </div>
+      <div class="nav-links">
+        <a class="pill-btn" href="CODEBASE_REFERENCE.md">Markdown Report</a>
+        <a class="pill-btn" href="diagrams/codebase-overview.html">Archify Overview</a>
+        <a class="pill-btn" href="../graphify-out/graph.html">Graphify Graph</a>
+        <a class="pill-btn" href="../graphify-out/GRAPH_REPORT.md">Graph Report</a>
+        <button id="themeToggle" class="pill-btn" type="button">Light Mode</button>
+      </div>
+    </div>
+  </header>
+
+  <div class="layout">
+    <aside class="sidebar" id="sidebar"></aside>
+
+    <main class="main">
+      <section class="summary-grid">
+        <div class="stat-card">
+          <div class="stat-label">Codebase Comment Audit</div>
+          <div class="stat-val" style="color:var(--green);">154 / 154</div>
+          <div class="stat-note">All Python classes/funcs + React/Playwright components &amp; handlers documented</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Files Documented</div>
+          <div class="stat-val" id="statFiles">0</div>
+          <div class="stat-note">Across server, edge, frontend, scripts, tests &amp; config</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Symbols Indexed</div>
+          <div class="stat-val" id="statSyms">0</div>
+          <div class="stat-note">Functions, classes, endpoints, React components &amp; hooks</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Logic &amp; Test Integrity</div>
+          <div class="stat-val" style="color:var(--green);">25 / 25 Pass</div>
+          <div class="stat-note">Zero existing code commented out; pytest &amp; Vite build green</div>
+        </div>
+      </section>
+
+      <details class="diagram-drawer">
+        <summary style="cursor:pointer;font-weight:700;font-size:0.9rem;">
+          Architecture &amp; Knowledge Graph Artifacts (13 Archify HTMLs + Graphify)
+        </summary>
+        <div class="diagram-grid">
+          <a class="diagram-link" href="diagrams/codebase-overview.html">Codebase Explainer<span>docs/diagrams/codebase-overview.html</span></a>
+          <a class="diagram-link" href="../graphify-out/graph.html">Graphify Knowledge Graph<span>graphify-out/graph.html</span></a>
+          <a class="diagram-link" href="diagrams/system-architecture.html">System Architecture<span>docs/diagrams/system-architecture.html</span></a>
+          <a class="diagram-link" href="diagrams/agent-interaction.html">Component &amp; Agent Roles<span>docs/diagrams/agent-interaction.html</span></a>
+          <a class="diagram-link" href="diagrams/pipeline-workflow.html">Pipeline Workflow<span>docs/diagrams/pipeline-workflow.html</span></a>
+          <a class="diagram-link" href="diagrams/ingest-sequence.html">Ingestion Sequence<span>docs/diagrams/ingest-sequence.html</span></a>
+          <a class="diagram-link" href="diagrams/pipeline-dataflow.html">Pipeline Dataflow<span>docs/diagrams/pipeline-dataflow.html</span></a>
+          <a class="diagram-link" href="diagrams/anomaly-lifecycle.html">Anomaly Lifecycle<span>docs/diagrams/anomaly-lifecycle.html</span></a>
+          <a class="diagram-link" href="diagrams/database-schema.html">Database Schema (ERD)<span>docs/diagrams/database-schema.html</span></a>
+          <a class="diagram-link" href="diagrams/project-structure.html">Repository Tree<span>docs/diagrams/project-structure.html</span></a>
+          <a class="diagram-link" href="diagrams/object-model.html">Python Object Model<span>docs/diagrams/object-model.html</span></a>
+          <a class="diagram-link" href="diagrams/incident-timeline.html">Incident Timeline<span>docs/diagrams/incident-timeline.html</span></a>
+          <a class="diagram-link" href="diagrams/frame-latency.html">Frame Latency Waterfall<span>docs/diagrams/frame-latency.html</span></a>
+          <a class="diagram-link" href="diagrams/auth-and-ingest-security.html">Auth &amp; Ingest Security<span>docs/diagrams/auth-and-ingest-security.html</span></a>
+        </div>
+      </details>
+
+      <div class="filter-bar" id="filterBar"></div>
+      <div id="resultsCount" style="font-size:0.8rem;color:var(--text-soft);margin-bottom:0.85rem;"></div>
+      <section id="content"></section>
+    </main>
+  </div>
+
+  <script>
+    const CODEBASE_DATA = [
+      {
+        id: 'server-app',
+        layer: 'Backend (server/)',
+        layerKey: 'backend',
+        path: 'server/app.py',
+        loc: 408,
+        role: 'FastAPI HTTP API (:8000): CORS allowlist, X-API-Key guard, JPEG header/size bounds, bounded drop-oldest frame_queue, and lifespan startup/shutdown.',
+        deps: 'server.db, server.pipeline, server.worker (dynamic), edge.controller',
+        state: 'MAX_FRAME_BYTES=2MB, MAX_JPEG_DIM=4096, frame_queue(maxsize=8), queue_lock, latest_frames, frames_received_total, frames_dropped_total',
+        symbols: [
+          {
+            name: '_get_jpeg_dimensions', kind: 'function', lines: 'L23–56',
+            sig: '_get_jpeg_dimensions(data: bytes) -> Optional[Tuple[int, int]]',
+            io: 'Raw JPEG bytes -> (width, height) or None; pure parser',
+            desc: 'Scans JPEG markers for Start-Of-Frame (0xC0..0xCF excluding DHT/DAC) to unpack dimensions without pixel decoding; stops at SOS (0xDA).'
+          },
+          {
+            name: 'verify_api_key', kind: 'function', lines: 'L59–88',
+            sig: 'verify_api_key(request: Request = None) -> None',
+            io: 'FastAPI Request -> None or HTTPException(401/403)',
+            desc: 'Validates X-API-Key against AIIOT_API_KEY and rejects unauthenticated calls whenever bound to 0.0.0.0 or remote client hosts.'
+          },
+          {
+            name: 'DetectionEvent', kind: 'class', lines: 'L102–111',
+            sig: 'class DetectionEvent(BaseModel)',
+            io: 'JSON schema for POST /events',
+            desc: 'Pydantic model validating ts, source, device_id, object_class, count, avg_conf, and optional normalized bounding box.'
+          },
+          {
+            name: 'AnomalyEvent', kind: 'class', lines: 'L114–121',
+            sig: 'class AnomalyEvent(BaseModel)',
+            io: 'JSON schema for serialized anomalies',
+            desc: 'Pydantic model representing ts, device_id, rule, detail, and severity (info | warning | critical).'
+          },
+          {
+            name: 'lifespan', kind: 'function', lines: 'L125–143',
+            sig: 'async def lifespan(app: FastAPI)',
+            io: 'Startup/shutdown hooks -> SQLite, cv-worker, optional embedded edge',
+            desc: 'Initializes SQLite tables, launches background CV worker, optionally starts embedded edge emitter if EMBEDDED_EDGE=1, and stops both on exit.'
+          },
+          {
+            name: 'post_frames', kind: 'endpoint', lines: 'L156–213',
+            sig: 'POST /frames (status 202) · device_id, ts, seq, source_kind',
+            io: 'JPEG body -> {status, queue_depth, dropped_oldest}; mutates frame_queue & pipeline.devices',
+            desc: 'Checks API key, Content-Length pre-read (413), body <=2MB, JPEG SOI/SOF <=4096px, drops oldest frame if queue full, and enqueues frame tuple.'
+          },
+          {
+            name: 'post_events', kind: 'endpoint', lines: 'L217–242',
+            sig: 'POST /events (ev: DetectionEvent)',
+            io: 'DetectionEvent -> {status: "logged", anomalies}; mutates rules/DB/alerts',
+            desc: 'Normalizes an injected detection event and calls pipeline.ingest_detections() synchronously so synthetic events use the exact rule pipeline.'
+          },
+          {
+            name: 'get_events', kind: 'endpoint', lines: 'L246–252',
+            sig: 'GET /events (limit=100, object_class=None, device_id=None)',
+            io: 'Query filters -> newest-first list from SQLite events',
+            desc: 'Delegates to db.recent_events() with clamped limit (1..1000) and optional class or device filters.'
+          },
+          {
+            name: 'get_anomalies', kind: 'endpoint', lines: 'L256–261',
+            sig: 'GET /anomalies (limit=100, device_id=None)',
+            io: 'Query filters -> newest-first list from SQLite anomalies',
+            desc: 'Delegates to db.recent_anomalies() for the Anomaly Vault and active alert banner.'
+          },
+          {
+            name: 'get_latest_frame', kind: 'endpoint', lines: 'L265–273',
+            sig: 'GET /frames/latest (device_id=None)',
+            io: 'device_id -> image/jpeg Response or 404',
+            desc: 'Returns the latest annotated JPEG bytes from in-memory latest_frames (or 404 if no frame has been processed yet).'
+          },
+          {
+            name: 'get_devices', kind: 'endpoint', lines: 'L277–288',
+            sig: 'GET /devices',
+            io: 'Acquires pipeline.ingest_lock -> device status list',
+            desc: 'Snapshots device_id, last_seen_ts, frames_received, and source_kind across all registered edge nodes.'
+          },
+          {
+            name: 'get_stats', kind: 'endpoint', lines: 'L292–311',
+            sig: 'GET /stats',
+            io: 'Reads db.stats() & queue_lock -> KPI JSON',
+            desc: 'Aggregates DB totals, rule breakdown, rolling FPS, avg frame/inference/E2E latency, uptime, queue_depth, and drop counters.'
+          },
+          {
+            name: 'get_health', kind: 'endpoint', lines: 'L315–341',
+            sig: 'GET /health',
+            io: 'Checks worker.is_running() & yolo26n.onnx -> 200 ok or 503 degraded',
+            desc: 'Verifies live CV worker thread and ONNX model availability on disk, raising HTTP 503 if either is degraded.'
+          },
+          {
+            name: 'EdgeConfigUpdate / check_allowed_source', kind: 'class', lines: 'L328–341',
+            sig: 'class EdgeConfigUpdate(BaseModel) + @field_validator("source")',
+            io: 'Validates fps(0.5..30), width(160..1920), quality(10..100), source',
+            desc: 'Bounds-checks encoder sliders and calls edge_controller.validate_source() to block path traversal or unsafe URI schemes.'
+          },
+          {
+            name: 'get_edge_status / post_edge_config / get_edge_frame', kind: 'endpoint', lines: 'L344–363',
+            sig: 'GET /edge/status · POST /edge/config · GET /edge/frame',
+            io: 'Reads/mutates edge_controller.controller -> JSON status or raw JPEG',
+            desc: 'Exposes embedded edge emitter status, live source/encoder hot-swapping, and latest pre-inference JPEG preview.'
+          },
+          {
+            name: 'ModeUpdate / get_mode / post_mode', kind: 'endpoint', lines: 'L366–382',
+            sig: 'ModeUpdate(mode, arming) · GET /mode · POST /mode',
+            io: 'Reads/updates pipeline mode (home|public) and arming state',
+            desc: 'Inspects or dynamically switches active security mode and home arming state across all active device rule engines.'
+          }
+        ]
+      },
+      {
+        id: 'server-pipeline',
+        layer: 'Backend (server/)',
+        layerKey: 'backend',
+        path: 'server/pipeline.py',
+        loc: 159,
+        role: 'Unified detection pipeline seam shared by worker.py and POST /events under ingest_lock.',
+        deps: 'server.agent, server.alerts, server.db, server.rules, config.yaml',
+        state: 'ingest_lock, devices: Dict[str, DeviceState], _cfg',
+        symbols: [
+          {
+            name: 'load_config', kind: 'function', lines: 'L14–19',
+            sig: 'load_config() -> dict',
+            io: 'Reads config.yaml -> dict (or {})',
+            desc: 'Safely parses YAML runtime settings from config.yaml if present in the working directory.'
+          },
+          {
+            name: 'DeviceState / .tracker', kind: 'class', lines: 'L21–32',
+            sig: '@dataclass class DeviceState + @property tracker',
+            io: 'Per-device container holding rule_engine, last_seen, frames_received, last_logged_by_class',
+            desc: 'Isolates tracking, rule cooldowns, and DB debounce timestamps per device_id; .tracker exposes rule_engine.tracker.'
+          },
+          {
+            name: 'get_active_mode / set_active_mode', kind: 'function', lines: 'L39–59',
+            sig: 'get_active_mode() -> dict · set_active_mode(mode, arming=None) -> dict',
+            io: 'Mutates _cfg and all DeviceState.rule_engine instances under ingest_lock',
+            desc: 'Returns or updates deployment mode (home/public) and arming status, propagating changes immediately to all tracked devices.'
+          },
+          {
+            name: '_get_device', kind: 'function', lines: 'L68–89',
+            sig: '_get_device(device_id: str, ts: float, source_kind: str) -> DeviceState',
+            io: 'device_id, ts, source_kind -> DeviceState (caller must hold ingest_lock)',
+            desc: 'Retrieves or lazily initializes a DeviceState with a configured RuleEngine and updates last_seen and source_kind.'
+          },
+          {
+            name: 'register_frame_received', kind: 'function', lines: 'L92–97',
+            sig: 'register_frame_received(device_id: str, ts: float, source_kind: str) -> DeviceState',
+            io: 'Acquires ingest_lock -> increments frames_received',
+            desc: 'Called by POST /frames on enqueue so /devices reflects frame arrivals even before worker inference completes.'
+          },
+          {
+            name: 'ingest_detections', kind: 'function', lines: 'L100–159',
+            sig: 'ingest_detections(device_id, ts, detections, source="api", frame_bgr=None) -> List[Anomaly]',
+            io: 'Detections -> List[Anomaly]; writes events/anomalies & triggers alerts or agent',
+            desc: 'Groups detections by class for debounced SQLite logging, runs RuleEngine.update(), and dispatches anomalies either to agent.submit_review() or directly to db.insert_anomaly() + alerts.fire().'
+          }
+        ]
+      },
+      {
+        id: 'server-worker',
+        layer: 'Backend (server/)',
+        layerKey: 'backend',
+        path: 'server/worker.py',
+        loc: 151,
+        role: 'Daemon background CV thread (cv-worker) consuming frame_queue, running ONNX inference, annotating frames, and logging frame_metrics.',
+        deps: 'server.alerts, server.app, server.db, server.detector, server.pipeline',
+        state: '_worker_thread, _stop_event, _detector, _watch_classes',
+        symbols: [
+          {
+            name: '_get_detector', kind: 'function', lines: 'L22–31',
+            sig: '_get_detector() -> Optional[ONNXRuntimeDetector]',
+            io: 'Loads yolo26n.onnx lazily -> singleton detector or None',
+            desc: 'Instantiates ONNXRuntimeDetector once on demand using conf_stay and per-class thresholds from config.yaml.'
+          },
+          {
+            name: '_annotate_frame', kind: 'function', lines: 'L34–72',
+            sig: '_annotate_frame(frame: np.ndarray, detections: list, alert_active: bool) -> bytes',
+            io: 'BGR frame + detections + bool -> JPEG bytes (quality=80)',
+            desc: 'Draws bounding boxes and class/confidence labels (orange for watch_classes, green otherwise) plus an 8px red border and ALERT ACTIVE banner when active.'
+          },
+          {
+            name: '_worker_loop', kind: 'function', lines: 'L75–127',
+            sig: '_worker_loop() -> None',
+            io: 'Pops frame_queue -> updates latest_frames & SQLite frame_metrics',
+            desc: 'Decodes JPEGs (<=4096px), skips frames per process_every_n_frames, times detector.detect(), calls pipeline.ingest_detections(), stores annotated JPEG, and inserts latency rows.'
+          },
+          {
+            name: 'start_worker / stop_worker / is_running', kind: 'function', lines: 'L126–144',
+            sig: 'start_worker() · stop_worker(timeout=2.0) · is_running() -> bool',
+            io: 'Controls daemon thread lifecycle',
+            desc: 'Starts, gracefully joins, and reports liveness of the cv-worker thread for FastAPI lifespan and /health.'
+          }
+        ]
+      },
+      {
+        id: 'server-detector',
+        layer: 'Backend (server/)',
+        layerKey: 'backend',
+        path: 'server/detector.py',
+        loc: 117,
+        role: 'CPU-only ONNX Runtime wrapper for NMS-free YOLO26n inference yielding normalized bounding boxes.',
+        deps: 'onnxruntime, cv2, numpy',
+        state: 'COCO_NAMES (80 COCO classes), InferenceSession (CPUExecutionProvider)',
+        symbols: [
+          {
+            name: 'ONNXRuntimeDetector.__init__', kind: 'method', lines: 'L32–59',
+            sig: '__init__(self, model_path="yolo26n.onnx", conf=0.30, class_thresholds=None, allowed_classes=None)',
+            io: 'Opens ORT CPU session & parses model metadata names',
+            desc: 'Loads the ONNX model without PyTorch, caches input tensor name, and loads embedded class labels with COCO_NAMES fallback.'
+          },
+          {
+            name: 'ONNXRuntimeDetector.detect', kind: 'method', lines: 'L61–117',
+            sig: 'detect(self, frame_bgr: np.ndarray, allowed_classes: Optional[Set[str]] = None) -> List[dict]',
+            io: 'BGR ndarray -> [{class_name, conf, box: (x1,y1,x2,y2)}]',
+            desc: 'Letterboxes to 640x640 (pad 114), converts BGR->RGB NCHW float32 /255, runs (1,300,6) NMS-free inference, filters by class/confidence, and unpads to 0..1 coordinates.'
+          }
+        ]
+      },
+      {
+        id: 'server-tracker',
+        layer: 'Backend (server/)',
+        layerKey: 'backend',
+        path: 'server/tracker.py',
+        loc: 286,
+        role: 'IoU/centroid multi-object & person tracker with confidence hysteresis, 15s occlusion persistence, owner binding, and stationary proximity resets.',
+        deps: 'math, dataclasses (pure logic, no I/O)',
+        state: 'Tracker.tracks, Tracker.person_tracks, Tracker.recently_pruned, _next_id',
+        symbols: [
+          {
+            name: 'box_center / box_bottom_center / center_distance / box_iou', kind: 'function', lines: 'L9–33',
+            sig: 'Geometry helpers on normalized Box=(x1,y1,x2,y2)',
+            io: 'Boxes -> center points, bottom-center point, Euclidean distance, IoU',
+            desc: 'Computes normalized bounding-box geometry used for greedy matching, person-to-bag owner radius, and foot-point polygon zone checks.'
+          },
+          {
+            name: 'Track / .speed', kind: 'class', lines: 'L36–62',
+            sig: '@dataclass class Track + speed(self, window_s=1.5) -> float',
+            io: 'Track state + recent history -> displacement speed (/sec)',
+            desc: 'Stores track lifetime, 5s anchor_box, owner_id, last_person_near_ts, near_since, zone_entered_ts, and computes movement speed over window_s.'
+          },
+          {
+            name: 'Tracker.__init__ / _alloc_id', kind: 'method', lines: 'L66–87',
+            sig: '__init__(track_timeout=15.0, owner_radius=0.20, conf_enter=0.40, conf_stay=0.30, confirm_frames=1)',
+            io: 'Initializes track registries & sequential ID generator',
+            desc: 'Configures occlusion survival window, proximity radius, dual-threshold confidence hysteresis, and minimum confirmation frames.'
+          },
+          {
+            name: 'Tracker._update_person_tracks', kind: 'method', lines: 'L100–149',
+            sig: '_update_person_tracks(self, person_dets: List[Tuple[Box, float]], ts: float) -> List[Track]',
+            io: 'Person detections + ts -> visible person Tracks',
+            desc: 'Prunes expired person tracks, matches detections >=conf_stay by (IoU, -dist), enters new tracks >=conf_enter, and retains 5s position history.'
+          },
+          {
+            name: 'Tracker._is_person_stationary', kind: 'method', lines: 'L152–157',
+            sig: '@staticmethod _is_person_stationary(ptr: Track, ts: float, window_s: float = 2.0) -> bool',
+            io: 'Person Track + ts -> bool',
+            desc: 'Returns True if the person center moved <=0.10 normalized units within the lookback window (prevents brief passersby from resetting bag dwell).'
+          },
+          {
+            name: 'Tracker.update', kind: 'method', lines: 'L159–286',
+            sig: 'update(self, detections: List[dict], ts: float, watch_classes: List[str] | None = None) -> List[Track]',
+            io: 'Normalized detections + ts -> confirmed active object Tracks',
+            desc: 'Prunes expired tracks into recently_pruned, matches watch-class detections, resets unattended clock on displacement ONLY if a person is within owner_radius, and resets proximity only for owner_id or a stationary person >=2s.'
+          }
+        ]
+      },
+      {
+        id: 'server-rules',
+        layer: 'Backend (server/)',
+        layerKey: 'backend',
+        path: 'server/rules.py',
+        loc: 919,
+        role: 'Multi-mode anomaly engine implementing public (P1–P21), home (H1–H18), and shared camera tamper/offline/repeat-escalation (S1–S6) rules.',
+        deps: 'cv2, numpy, server.tracker',
+        state: 'ALWAYS_ALERT_RULES, LOG_ONLY_RULES, RuleEngine.last_fired, fire_history, person_count_history, zone_visit_history, queue_high_since, net_capacity_count, track_line_side, ref_hist',
+        symbols: [
+          {
+            name: 'Anomaly', kind: 'class', lines: 'L11–20',
+            sig: '@dataclass class Anomaly(rule, detail, severity, ts, policy="review", zone="", mode="public")',
+            io: 'Structured anomaly event emitted by RuleEngine',
+            desc: 'Carries triggered rule metadata, severity, capture timestamp, zone name, operating mode, and agent triage policy.'
+          },
+          {
+            name: '_escalate_severity / point_in_polygon / _parse_hhmm / is_in_time_window / _cross_side', kind: 'function', lines: 'L41–69',
+            sig: 'Pure spatial, temporal, and severity utilities',
+            io: 'Coordinates, polygons, HH:MM windows -> booleans / scalars',
+            desc: 'Escalates severity tiers, runs cv2.pointPolygonTest for zones, evaluates midnight-crossing time windows, and computes tripwire line side signs.'
+          },
+          {
+            name: 'RuleEngine.__init__ / set_mode', kind: 'method', lines: 'L73–145',
+            sig: '__init__(config, mode, arming, home_cfg, public_cfg) · set_mode(mode, arming)',
+            io: 'Loads config & initializes Tracker -> updates watch/ignore classes',
+            desc: 'Configures home vs public thresholds, arming states, tamper sensitivities, and dynamically switches watch_classes/ignore_classes.'
+          },
+          {
+            name: 'RuleEngine._can_fire / _policy_for / _emit', kind: 'method', lines: 'L147–192',
+            sig: '_can_fire(key, ts) · _policy_for(rule) · _emit(out, rule, detail, severity, ts, ...)',
+            io: 'Applies per-(rule, track_id, zone) cooldown & S5 repeat escalation',
+            desc: 'Prevents alert flooding within cooldown_seconds, attaches ALWAYS_ALERT/LOG_ONLY/review routing policies, and upgrades severity after repeat triggers.'
+          },
+          {
+            name: 'RuleEngine.check_camera_health / check_offline', kind: 'method', lines: 'L194–251',
+            sig: 'check_camera_health(frame_bgr, ts) · check_offline(now_ts)',
+            io: 'Raw BGR frame / wall clock -> S1 camera_offline, S2 tamper_blocked, S3 tamper_moved',
+            desc: 'Detects dark/blurry occlusion (mean lum or Laplacian variance), sudden scene shifts via 32-bin histogram correlation, and silent camera disconnects.'
+          },
+          {
+            name: 'RuleEngine.update', kind: 'method', lines: 'L270–320',
+            sig: 'update(self, detections: List[dict], ts: float, frame_bgr: Optional[np.ndarray] = None) -> List[Anomaly]',
+            io: 'Detections + ts + optional BGR image -> List[Anomaly]',
+            desc: 'Runs camera health checks, short-circuits security rules when disarmed in home mode (S6), updates Tracker, and dispatches to _eval_home or _eval_public.'
+          },
+          {
+            name: 'RuleEngine._eval_home', kind: 'method', lines: 'L322–584',
+            sig: '_eval_home(self, anomalies, detections, visible_persons, active_tracks, person_count, ts) -> None',
+            io: 'Appends home security & safety Anomaly objects',
+            desc: 'Evaluates H1–H18: night_person, person_in_zone, fence_or_wall_approach, loitering, child_near_hazard_zone, multiple_persons_entry, repeat_visit_casing, zone_entry_exit, door package left/taken, valuable_removed, driveway vehicles, person_down, inactivity, sharp objects, and lone pets.'
+          },
+          {
+            name: 'RuleEngine._eval_public', kind: 'method', lines: 'L586–866',
+            sig: '_eval_public(self, anomalies, detections, visible_persons, active_tracks, person_count, ts) -> None',
+            io: 'Appends public/campus Anomaly objects',
+            desc: 'Evaluates P1–P21 (including R1 occupancy_spike, R2 unexpected_object, R3 object_dwell): rapid_gathering, sudden_dispersal, after_hours_presence, abandoned_after_owner_left, bag_taken_by_other_person, loitering, person_down, running, restricted/pedestrian/queue/no_wheels zones, tripwires, and sharp objects.'
+          },
+          {
+            name: 'RuleEngine._check_lines', kind: 'method', lines: 'L868–919',
+            sig: '_check_lines(self, anomalies, visible_persons, lines, ts, rule_name, capacity_limit=None) -> None',
+            io: 'Tracks per-(track_id, line) cross-product sign changes',
+            desc: 'Detects directional tripwire crossings (in/out), updates net_capacity_count, fires wrong_way_or_tripwire or zone_entry_exit, and alerts on capacity_exceeded.'
+          }
+        ]
+      },
+      {
+        id: 'server-db',
+        layer: 'Backend (server/)',
+        layerKey: 'backend',
+        path: 'server/db.py',
+        loc: 211,
+        role: 'Zero-ORM SQLite storage engine (events.db) using thread-local connections, WAL journal mode, and parameterized SQL.',
+        deps: 'sqlite3, threading, time',
+        state: 'DB_PATH="events.db", _local (threading.local)',
+        symbols: [
+          {
+            name: '_conn', kind: 'function', lines: 'L10–21',
+            sig: '_conn() -> sqlite3.Connection',
+            io: 'Thread-local connection with WAL + 5000ms busy_timeout',
+            desc: 'Lazily opens a SQLite connection per worker/API thread and reopens automatically if DB_PATH is switched (e.g., pytest tmp_path).'
+          },
+          {
+            name: 'init_db', kind: 'function', lines: 'L24–68',
+            sig: 'init_db(db_path: Optional[str] = None) -> None',
+            io: 'Optional path override -> creates events, anomalies, frame_metrics & ts indexes',
+            desc: 'Configures DB_PATH if given and executes idempotent DDL creating all three telemetry tables and timestamp indexes.'
+          },
+          {
+            name: 'insert_event / insert_anomaly / insert_frame_metric', kind: 'function', lines: 'L68–114',
+            sig: 'Insert helpers returning inserted SQLite row id (int)',
+            io: 'Column args -> SQLite INSERT + commit -> lastrowid',
+            desc: 'Persists debounced class detections, anomaly events (real or [SUPPRESSED]), and per-frame KB/inference/E2E timing rows.'
+          },
+          {
+            name: 'recent_events / recent_anomalies', kind: 'function', lines: 'L117–152',
+            sig: 'recent_events(limit=100, object_class=None, device_id=None) · recent_anomalies(limit=100, device_id=None)',
+            io: 'Clamped limit (1..1000) & filters -> newest-first List[Dict[str, Any]]',
+            desc: 'Queries recent detection or anomaly history ordered by ts DESC, id DESC for REST GET endpoints.'
+          },
+          {
+            name: 'stats', kind: 'function', lines: 'L163–211',
+            sig: 'stats(now: Optional[float] = None) -> Dict[str, Any]',
+            io: 'Reads events, anomalies, frame_metrics -> dashboard KPI summary',
+            desc: 'Aggregates total_events, R1/R2/R3 rule counts, last_anomaly_ts, 10s rolling FPS, and 60s rolling frame KB, inference ms, and E2E ms.'
+          }
+        ]
+      },
+      {
+        id: 'server-alerts',
+        layer: 'Backend (server/)',
+        layerKey: 'backend',
+        path: 'server/alerts.py',
+        loc: 115,
+        role: 'Alert actuation channel: 15s red-border flag, ANSI console banner, OS beep, and HMAC-SHA256 webhook.',
+        deps: 'requests, hmac, hashlib, winsound/afplay',
+        state: 'alert_active_until, last_anomaly_ts',
+        symbols: [
+          {
+            name: 'is_alert_active', kind: 'function', lines: 'L17–20',
+            sig: 'is_alert_active(now: float | None = None) -> bool',
+            io: 'Current time -> bool',
+            desc: 'Returns True while now < alert_active_until so worker.py draws the red ALERT ACTIVE border onto /frames/latest.'
+          },
+          {
+            name: '_beep', kind: 'function', lines: 'L23–43',
+            sig: '_beep() -> None',
+            io: 'Triggers OS audio notification',
+            desc: 'Calls winsound.Beep(1000, 250) on Windows, afplay Ping.aiff on macOS, or writes terminal bell \\a elsewhere.'
+          },
+          {
+            name: 'send_hermes_webhook', kind: 'function', lines: 'L46–96',
+            sig: 'send_hermes_webhook(anomaly, device_id="", reason="", webhook_url=None, webhook_secret=None) -> bool',
+            io: 'POSTs signed JSON payload -> True if HTTP <300',
+            desc: 'Signs alert JSON with HMAC-SHA256 (X-Hub-Signature-256) using HERMES_WEBHOOK_SECRET and delivers to HERMES_WEBHOOK_URL (3s timeout).'
+          },
+          {
+            name: 'fire', kind: 'function', lines: 'L99–115',
+            sig: 'fire(anomaly, device_id: str = "", reason: str = "") -> None',
+            io: 'Mutates alert_active_until (+15s) -> stdout, beep, webhook',
+            desc: 'Activates the 15s visual overlay timer, prints a colored console alert banner, plays _beep(), and dispatches send_hermes_webhook().'
+          }
+        ]
+      },
+      {
+        id: 'server-agent',
+        layer: 'Backend (server/)',
+        layerKey: 'backend',
+        path: 'server/agent.py',
+        loc: 232,
+        role: 'LangGraph metadata-only security triage workflow with fail-open behavior and background ThreadPoolExecutor execution.',
+        deps: 'langgraph.graph, langchain_openai, langchain_ollama, dotenv, server.alerts, server.db',
+        state: '_executor (ThreadPoolExecutor max_workers=2)',
+        symbols: [
+          {
+            name: 'AgentState', kind: 'class', lines: 'L21–34',
+            sig: 'class AgentState(TypedDict, total=False)',
+            io: 'State dictionary shared across LangGraph nodes',
+            desc: 'Defines device_id, anomaly, mode, arming, policy, recent_events, local_time, real, severity, reason, and action.'
+          },
+          {
+            name: '_extract_json', kind: 'function', lines: 'L37–43',
+            sig: '_extract_json(text: str) -> dict',
+            io: 'LLM string -> parsed JSON dict',
+            desc: 'Extracts the first {...} JSON object block via regex so surrounding markdown fences do not break parsing.'
+          },
+          {
+            name: '_default_llm_invoke', kind: 'function', lines: 'L46–77',
+            sig: '_default_llm_invoke(prompt: str, cfg: dict) -> str',
+            io: 'Prompt + config -> model response text',
+            desc: 'Routes triage prompts to local ChatOllama or NVIDIA Integrate ChatOpenAI (temperature=0, max_retries=0).'
+          },
+          {
+            name: 'build_agent_graph', kind: 'function', lines: 'L80–197',
+            sig: 'build_agent_graph(cfg=None, llm_fn=None) -> CompiledStateGraph',
+            io: 'Compiles context -> decide -> notify | suppress -> END graph',
+            desc: 'Defines context_node (last 5 DB events), decide_node (honors log_only/always_alert and fails open on exceptions), route_edge, notify_node, and suppress_node.'
+          },
+          {
+            name: 'review_anomaly / submit_review', kind: 'function', lines: 'L188–218',
+            sig: 'review_anomaly(...) -> Dict[str, Any] · submit_review(...) -> None',
+            io: 'Runs graph synchronously or via 2-worker ThreadPoolExecutor',
+            desc: 'review_anomaly executes triage for one Anomaly; submit_review offloads it asynchronously when async_dispatch is True.'
+          }
+        ]
+      },
+      {
+        id: 'edge-capture',
+        layer: 'Edge (edge/)',
+        layerKey: 'edge',
+        path: 'edge/capture.py',
+        loc: 97,
+        role: 'Unified OpenCV VideoSource wrapper supporting webcams, looping local MP4 clips, RTSP/HTTP streams, and YouTube via yt-dlp.',
+        deps: 'cv2, numpy, yt_dlp',
+        state: 'VideoSource.cap, source_kind, stream_url, file_fps',
+        symbols: [
+          {
+            name: 'resolve_youtube_stream_url', kind: 'function', lines: 'L8–23',
+            sig: 'resolve_youtube_stream_url(url: str) -> str',
+            io: 'YouTube URL -> direct playable stream URL (<=720p)',
+            desc: 'Uses yt_dlp (with Node JS runtime if available) to resolve the media stream URL in memory without downloading files.'
+          },
+          {
+            name: 'VideoSource.__init__', kind: 'method', lines: 'L29–68',
+            sig: '__init__(self, src: str | int)',
+            io: 'Opens cv2.VideoCapture or raises RuntimeError',
+            desc: 'Detects source kind (live, youtube, url, file), sets single-frame buffer on live cameras, and reads file_fps.'
+          },
+          {
+            name: 'VideoSource.read / .release', kind: 'method', lines: 'L66–91',
+            sig: 'read(self) -> np.ndarray | None · release(self) -> None',
+            io: 'Returns BGR frame or None; releases VideoCapture handle',
+            desc: 'Reads frames seamlessly, looping MP4 files on EOF and re-resolving YouTube stream URLs after connection drops.'
+          }
+        ]
+      },
+      {
+        id: 'edge-controller',
+        layer: 'Edge (edge/)',
+        layerKey: 'edge',
+        path: 'edge/controller.py',
+        loc: 288,
+        role: 'Thread-safe embedded edge emitter managed via /edge/* endpoints and persisted to data/edge_state.json.',
+        deps: 'edge.capture.VideoSource, cv2, requests, yaml',
+        state: 'STATE_PATH="data/edge_state.json", controller singleton, lock, latest_jpeg',
+        symbols: [
+          {
+            name: 'load_defaults / validate_source / save_state_file', kind: 'function', lines: 'L13–63',
+            sig: 'Configuration defaults, source allowlist validator, atomic JSON persistence',
+            io: 'Reads config.yaml; validates camera/URL/data/*.mp4; writes edge_state.json',
+            desc: 'Provides default encoder settings, blocks path-traversal sources outside data/, and atomically replaces edge_state.json via os.replace.'
+          },
+          {
+            name: 'EdgeEmitterController.__init__ / start / stop', kind: 'method', lines: 'L67–95',
+            sig: '__init__(server_url="http://127.0.0.1:8000") · start() · stop(timeout=2.0)',
+            io: 'Manages daemon streaming thread lifecycle',
+            desc: 'Initializes default state, writes edge_state.json, and cleanly starts/stops the background uplink thread.'
+          },
+          {
+            name: 'EdgeEmitterController.update_config / list_sources / get_status', kind: 'method', lines: 'L97–165',
+            sig: 'update_config(updates) · list_sources() · get_status()',
+            io: 'Reads/mutates self.cfg under self.lock -> status JSON',
+            desc: 'Validates and persists config patches, enumerates data/*.mp4 clips with scenario tags, and reports live FPS/KBps telemetry.'
+          },
+          {
+            name: 'EdgeEmitterController._run_loop', kind: 'method', lines: 'L178–285',
+            sig: '_run_loop(self) -> None',
+            io: 'VideoSource -> resize -> JPEG -> POST /frames',
+            desc: 'Continuously reads VideoSource frames, hot-swaps sources, throttles to target FPS, resizes/compresses JPEG, caches latest_jpeg, and posts to /frames.'
+          }
+        ]
+      },
+      {
+        id: 'edge-client',
+        layer: 'Edge (edge/)',
+        layerKey: 'edge',
+        path: 'edge/edge_client.py',
+        loc: 175,
+        role: 'Standalone CLI edge node for separate terminals or Raspberry Pi hardware, with live edge_state.json hot-reload.',
+        deps: 'edge.capture.VideoSource, cv2, requests, yaml',
+        state: 'STATE_PATH="data/edge_state.json"',
+        symbols: [
+          {
+            name: 'load_edge_defaults / read_runtime_state', kind: 'function', lines: 'L16–30',
+            sig: 'load_edge_defaults() -> dict · read_runtime_state() -> dict | None',
+            io: 'Reads config.yaml edge section and data/edge_state.json',
+            desc: 'Loads initial CLI defaults and safely reads UI-driven source/encoder updates from edge_state.json.'
+          },
+          {
+            name: 'main', kind: 'function', lines: 'L35–171',
+            sig: 'main() -> None',
+            io: 'CLI flags -> continuous JPEG POST /frames loop',
+            desc: 'Parses CLI args, hot-reloads edge_state.json every 0.4s, resizes & JPEG-encodes at target FPS, posts with X-API-Key & 0.5–5s backoff, and logs 5s stats.'
+          }
+        ]
+      },
+      {
+        id: 'fe-main',
+        layer: 'Frontend (frontend/)',
+        layerKey: 'frontend',
+        path: 'frontend/src/main.jsx',
+        loc: 25,
+        role: 'React entry multiplexer switching between Analytics Console (:5173) and Edge Emitter Deck (:5174).',
+        deps: 'react, react-dom, AnalyticsApp, EdgeEmitterApp, styles.css',
+        state: 'isEdgeApp (port 5174 | ?app=edge | VITE_APP_ROLE=edge)',
+        symbols: [
+          {
+            name: 'Entry Router', kind: 'component', lines: 'L11–25',
+            sig: 'createRoot(#root).render(isEdgeApp ? <EdgeEmitterApp /> : <AnalyticsApp />)',
+            io: 'Inspects location.port, query params, env -> sets title & mounts app',
+            desc: 'Routes one shared Vite codebase cleanly to either the consumer Analytics Console or producer Edge Emitter Deck.'
+          }
+        ]
+      },
+      {
+        id: 'fe-glass',
+        layer: 'Frontend (frontend/)',
+        layerKey: 'frontend',
+        path: 'frontend/src/components/GlassShell.jsx',
+        loc: 132,
+        role: 'Shared RoastGlass iOS-dark UI shell components (custom trailing cursor, animated pill tabs, hero header).',
+        deps: 'react (useEffect, useRef, useState)',
+        state: 'DOM refs + sliderStyle state',
+        symbols: [
+          {
+            name: 'CustomCursor', kind: 'component', lines: 'L6–57',
+            sig: 'export function CustomCursor()',
+            io: 'mousemove + requestAnimationFrame -> updates dot & trailing ring',
+            desc: 'Animates a pointer dot and spring-eased glass ring that enlarges (.is-hover) over interactive controls.'
+          },
+          {
+            name: 'AnimatedTabBar', kind: 'component', lines: 'L62–110',
+            sig: 'export function AnimatedTabBar({ tabs, activeTab, onChange })',
+            io: 'Measure active button Rect -> updates sliding pill CSS transform',
+            desc: 'Renders the floating glass tab bar and recalculates slider width/offset on activeTab changes and window resizes.'
+          },
+          {
+            name: 'HeroHeader', kind: 'component', lines: 'L115–132',
+            sig: 'export function HeroHeader({ badge, title, subtitle, peerUrl, peerLabel })',
+            io: 'Props -> top glass hero bar with peer-UI link',
+            desc: 'Displays pulsing status pill, serif heading, subtitle, and external switch button to the peer frontend.'
+          }
+        ]
+      },
+      {
+        id: 'fe-analytics',
+        layer: 'Frontend (frontend/)',
+        layerKey: 'frontend',
+        path: 'frontend/src/AnalyticsApp.jsx',
+        loc: 426,
+        role: 'Server Analytics Console (:5173): live annotated video stream, KPI tiles, R1–R3 anomaly vault, detection ledger, and node health.',
+        deps: 'GlassShell, FastAPI endpoints (:8000)',
+        state: 'activeTab, stats, anomalies, events, devices, health, frameUrl',
+        symbols: [
+          {
+            name: 'apiHeaders / TABS', kind: 'config', lines: 'L7–14',
+            sig: 'apiHeaders(extra = {}) · TABS = [live, anomalies, events, nodes]',
+            io: 'Injects X-API-Key from VITE_API_KEY; defines 4 dashboard tabs',
+            desc: 'Provides shared authenticated request headers and tab metadata for the analytics shell.'
+          },
+          {
+            name: 'OccupancyChart', kind: 'component', lines: 'L20–83',
+            sig: 'function OccupancyChart({ events })',
+            io: 'events array -> SVG person-count area chart with R1 threshold',
+            desc: 'Plots up to 32 recent person detection events chronologically alongside a dashed red R1 threshold line (>3 persons).'
+          },
+          {
+            name: 'AnalyticsApp', kind: 'component', lines: 'L88–426',
+            sig: 'export default function AnalyticsApp()',
+            io: 'Polls JSON every 650ms & JPEG every 260ms -> renders 4-tab console',
+            desc: 'Fetches /stats, /anomalies, /events, /devices, /health via Promise.all, swaps Blob URLs flicker-free for /frames/latest, shows 15s active alert banner, and renders all tabs.'
+          }
+        ]
+      },
+      {
+        id: 'fe-edge',
+        layer: 'Frontend (frontend/)',
+        layerKey: 'frontend',
+        path: 'frontend/src/EdgeEmitterApp.jsx',
+        loc: 477,
+        role: 'Edge Emitter Control Deck (:5174): hot-swap video source, tune FPS/width/JPEG quality, preview raw frame, and inject synthetic R1/R2/R3 events.',
+        deps: 'GlassShell, FastAPI /edge/* & POST /events',
+        state: 'activeTab, edge, customSrc, showCustomInput, frameUrl, toastMsg',
+        symbols: [
+          {
+            name: 'apiHeaders / TABS', kind: 'config', lines: 'L7–13',
+            sig: 'apiHeaders(extra = {}) · TABS = [source, encoder, inject]',
+            io: 'Injects X-API-Key; defines 3 control deck tabs',
+            desc: 'Configures request authentication headers and tab definitions for source switching, encoder tuning, and synthetic injection.'
+          },
+          {
+            name: 'EdgeEmitterApp (polling & helpers)', kind: 'component', lines: 'L15–468',
+            sig: 'export default function EdgeEmitterApp()',
+            io: 'Polls /edge/status (500ms) & /edge/frame (260ms)',
+            desc: 'Manages toast notifications (showToast), config patches (updateEdgeConfig -> POST /edge/config), synthetic rule triggers (injectEvent -> POST /events for r1/r2/r3), and all 3 UI tabs.'
+          }
+        ]
+      },
+      {
+        id: 'fe-styles-cfg',
+        layer: 'Frontend (frontend/)',
+        layerKey: 'frontend',
+        path: 'frontend/src/styles.css · index.html · vite.config.js · package.json',
+        loc: 591,
+        role: 'RoastGlass CSS design tokens & styling (540 LOC), Google Fonts HTML shell, Vite proxy/env key injection, and npm dev scripts.',
+        deps: '@vitejs/plugin-react, vite, react, react-dom',
+        state: 'CSS custom properties (--espresso-void, --caramel, --spring)',
+        symbols: [
+          {
+            name: 'styles.css / index.html / vite.config.js / package.json', kind: 'config', lines: 'Full files',
+            sig: 'Vite build + RoastGlass theme + dev:analytics(:5173) + dev:edge(:5174)',
+            io: 'Exposes VITE_API_KEY from AIIOT_API_KEY env; styles glass UI & cursor',
+            desc: 'Defines the complete visual design system, responsive grids, font imports, and Vite development servers.'
+          }
+        ]
+      },
+      {
+        id: 'scripts-eval',
+        layer: 'Scripts & Tests',
+        layerKey: 'tooling',
+        path: 'scripts/eval.py',
+        loc: 102,
+        role: 'Offline evaluation harness computing Precision and Recall across labeled clips in data/eval_labels.yaml.',
+        deps: 'server.detector.ONNXRuntimeDetector, server.rules.RuleEngine, cv2, yaml',
+        state: 'DEFAULT_LABELS, data/eval_labels.yaml',
+        symbols: [
+          {
+            name: 'ensure_labels / evaluate_clip / main', kind: 'function', lines: 'L28–95',
+            sig: 'ensure_labels(path) · evaluate_clip(detector, clip_cfg, base_cfg, sample_fps=5.0) · main()',
+            io: 'Replays MP4 clips at 5 FPS -> prints TP/FP/FN, Precision, Recall',
+            desc: 'Loads or generates eval_labels.yaml, runs ONNX detector + RuleEngine per sampled frame, and scores expected vs forbidden rules.'
+          }
+        ]
+      },
+      {
+        id: 'scripts-export',
+        layer: 'Scripts & Tests',
+        layerKey: 'tooling',
+        path: 'scripts/export_model.py',
+        loc: 35,
+        role: 'One-time YOLO26n ONNX exporter/downloader and tensor shape sanity verifier.',
+        deps: 'ultralytics (optional), requests, onnxruntime',
+        state: 'MODEL_PATH="yolo26n.onnx"',
+        symbols: [
+          {
+            name: 'main', kind: 'function', lines: 'L10–27',
+            sig: 'main()',
+            io: 'Produces yolo26n.onnx -> prints MB size, input/output shapes',
+            desc: 'Exports yolo26n.pt (nms=False) or downloads pre-exported ONNX from Ultralytics releases, then verifies ORT CPU loading.'
+          }
+        ]
+      },
+      {
+        id: 'scripts-sim',
+        layer: 'Scripts & Tests',
+        layerKey: 'tooling',
+        path: 'scripts/simulator.py',
+        loc: 66,
+        role: 'Camera-free 91-second synthetic event driver reproducing R1, R2, and R3 via POST /events.',
+        deps: 'requests, argparse',
+        state: 'AIIOT_API_KEY env header',
+        symbols: [
+          {
+            name: 'run_simulator / main', kind: 'function', lines: 'L7–60',
+            sig: 'run_simulator(server_url, device_id, real_time=True) -> dict · main()',
+            io: '3-phase HTTP POST /events script -> triggered rule counts',
+            desc: 'Sends normal traffic (0-29s), 6-person spike + fixed backpack (30-59s), and unattended suitcase (60-90s), with --fast mode.'
+          }
+        ]
+      },
+      {
+        id: 'scripts-playwright',
+        layer: 'Scripts & Tests',
+        layerKey: 'tooling',
+        path: 'scripts/test_frontends.js',
+        loc: 108,
+        role: 'Playwright headless Chromium smoke test verifying both :5174 and :5173 UIs and capturing screenshots.',
+        deps: 'playwright, fs, path',
+        state: 'Writes PNGs into screenshots/',
+        symbols: [
+          {
+            name: 'run', kind: 'function', lines: 'L8–103',
+            sig: 'async function run()',
+            io: 'Drives Chromium 1440x900 against :5174 & :5173 -> saves 7 screenshots',
+            desc: 'Checks custom cursor DOM nodes, cycles through tabs on Edge Deck & Analytics Console, clicks R1 injector, and captures visual evidence.'
+          }
+        ]
+      },
+      {
+        id: 'tests-rules',
+        layer: 'Scripts & Tests',
+        layerKey: 'tooling',
+        path: 'tests/test_rules.py',
+        loc: 636,
+        role: 'Pytest suite (25 test_* functions + 3 helpers) validating public rules, tracker edge cases, API security, home rules, tamper, LangGraph, and webhooks.',
+        deps: 'pytest, fastapi, numpy, yaml, server.*',
+        state: 'Uses tmp_path SQLite DBs & monkeypatched mocks',
+        symbols: [
+          {
+            name: 'make_engine / _make_sec_req / make_home_engine', kind: 'function', lines: 'L5–8, L220–243, L427–435',
+            sig: 'Test fixture & synthetic ASGI Request builders',
+            io: 'Reads config.yaml -> RuleEngine or FastAPI Request',
+            desc: 'Constructs isolated public/home RuleEngine instances and ASGI Requests (tracking whether request.body() is read).'
+          },
+          {
+            name: 'Core Rules & Tracker Edge Cases (10 tests)', kind: 'test', lines: 'L11–164',
+            sig: 'test_ut1..ut5, test_passerby_*, test_nudge_*, test_bag_occluded_*, test_two_bags_*, test_confidence_hysteresis',
+            io: 'Fake timestamps -> deterministic rule assertions',
+            desc: 'Verifies R1/R2/R3 thresholds, owner reset, passerby & wind-nudge immunity, 4s occlusion continuity, per-bag cooldown independence, and 0.40/0.30 hysteresis.'
+          },
+          {
+            name: 'API Validation & Security Gates (9 tests)', kind: 'test', lines: 'L178–453',
+            sig: 'test_api_frames_and_events, test_security_401/403/413/400/422/cors, test_api_key_set_*',
+            io: 'Direct FastAPI endpoint & Pydantic invocation',
+            desc: 'Verifies 202/400/413/503 responses, X-API-Key 401/403 + 0.0.0.0 enforcement, pre-read Content-Length rejection, JPEG SOF >4096 guard, source traversal block, CORS, and simulator header forwarding.'
+          },
+          {
+            name: 'Home, Public Extended, Tamper, Agent & Webhook (6 tests)', kind: 'test', lines: 'L468–632',
+            sig: 'test_home_*, test_public_extended_*, test_camera_tamper_*, test_langgraph_*, test_hermes_*',
+            io: 'Simulated frames/detections & mocked LLM/HTTP',
+            desc: 'Verifies home zones/pets/door packages/person_down, sudden_dispersal, vehicle_in_pedestrian_zone, dark tamper & repeat escalation, LangGraph confirm/suppress/fail-open, and HMAC-SHA256 signing.'
+          }
+        ]
+      },
+      {
+        id: 'config-yaml',
+        layer: 'Configuration',
+        layerKey: 'config',
+        path: 'config.yaml',
+        loc: 188,
+        role: 'Central YAML configuration for edge defaults, server thresholds, mode/arming, shared rules, home/public zones & tripwires, and LangGraph LLM provider.',
+        deps: 'Loaded by server/pipeline.py, edge/controller.py, edge/edge_client.py, scripts/eval.py, tests/test_rules.py',
+        state: 'Static YAML configuration',
+        symbols: [
+          {
+            name: 'edge / server / mode / rules / home / public / agent', kind: 'config', lines: 'L1–188',
+            sig: 'mode: public | arming: armed_night | queue_size: 8 | fps: 5 | width: 960 | quality: 90',
+            io: 'Provides polygon coordinates, line tripwires, per-class thresholds & LLM settings',
+            desc: 'Controls runtime behavior across all subsystems without code edits (per-class detector thresholds, 6 home zones, 5 public zones, and NVIDIA/Ollama agent config).'
+          }
+        ]
+      }
+    ];
+
+    const state = { query: '', layer: 'all', activeFile: CODEBASE_DATA[0].id };
+
+    function escapeHtml(str) {
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+    }
+
+    function matchesQuery(file, sym, q) {
+      if (!q) return true;
+      const hay = [
+        file.path, file.layer, file.role, file.deps, file.state,
+        sym.name, sym.kind, sym.sig, sym.io, sym.desc, sym.lines
+      ].join(' ').toLowerCase();
+      return hay.includes(q);
+    }
+
+    function renderFilters() {
+      const layers = [
+        { key: 'all', label: 'All Layers' },
+        { key: 'backend', label: 'Backend (server/)' },
+        { key: 'edge', label: 'Edge (edge/)' },
+        { key: 'frontend', label: 'Frontend (frontend/)' },
+        { key: 'tooling', label: 'Scripts & Tests' },
+        { key: 'config', label: 'Config' }
+      ];
+      document.getElementById('filterBar').innerHTML = layers.map(l =>
+        `<button class="pill-btn ${state.layer === l.key ? 'active' : ''}" data-layer="${l.key}">${l.label}</button>`
+      ).join('');
+      document.querySelectorAll('#filterBar [data-layer]').forEach(btn => {
+        btn.addEventListener('click', () => {
+          state.layer = btn.getAttribute('data-layer');
+          renderFilters();
+          renderAll();
+        });
+      });
+    }
+
+    function renderAll() {
+      const q = state.query.trim().toLowerCase();
+      const filteredFiles = [];
+      let totalSymbols = 0;
+
+      CODEBASE_DATA.forEach(file => {
+        if (state.layer !== 'all' && file.layerKey !== state.layer) return;
+        const matchedSyms = q
+          ? file.symbols.filter(s => matchesQuery(file, s, q))
+          : file.symbols;
+        if (matchedSyms.length > 0 || (q && `${file.path} ${file.role} ${file.deps}`.toLowerCase().includes(q))) {
+          const symsToShow = matchedSyms.length > 0 ? matchedSyms : file.symbols;
+          filteredFiles.push({ ...file, symbols: symsToShow });
+          totalSymbols += symsToShow.length;
+        }
+      });
+
+      document.getElementById('statFiles').textContent = CODEBASE_DATA.length;
+      document.getElementById('statSyms').textContent = CODEBASE_DATA.reduce((acc, f) => acc + f.symbols.length, 0);
+      document.getElementById('resultsCount').textContent =
+        `Showing ${filteredFiles.length} file entry(s) · ${totalSymbols} symbol group(s)` +
+        (q ? ` matching "${state.query}"` : '');
+
+      // Render sidebar grouped by layer
+      const groups = new Map();
+      filteredFiles.forEach(f => {
+        if (!groups.has(f.layer)) groups.set(f.layer, []);
+        groups.get(f.layer).push(f);
+      });
+
+      let sideHtml = '';
+      for (const [layerName, files] of groups.entries()) {
+        sideHtml += `<div class="layer-group"><div class="layer-title"><span>${escapeHtml(layerName)}</span><span>${files.length}</span></div>`;
+        files.forEach(f => {
+          const isActive = state.activeFile === f.id ? 'active' : '';
+          sideHtml += `<a class="side-file ${isActive}" href="#file-${f.id}" data-file-id="${f.id}">
+            <span>${escapeHtml(f.path)}</span>
+            <span class="side-count">${f.symbols.length}</span>
+          </a>`;
+          sideHtml += `<div class="side-syms">`;
+          f.symbols.forEach((s, idx) => {
+            sideHtml += `<a class="side-sym" href="#sym-${f.id}-${idx}" title="${escapeHtml(s.name)}">${escapeHtml(s.name)}</a>`;
+          });
+          sideHtml += `</div>`;
+        });
+        sideHtml += `</div>`;
+      }
+      document.getElementById('sidebar').innerHTML = sideHtml || `<div style="padding:1rem;color:var(--text-soft);font-size:0.82rem;">No matching files</div>`;
+
+      // Render main content
+      if (filteredFiles.length === 0) {
+        document.getElementById('content').innerHTML = `<div class="empty-state">No files or functions matched <code>${escapeHtml(state.query)}</code>. Try clearing search or switching layer filters.</div>`;
+        return;
+      }
+
+      document.getElementById('content').innerHTML = filteredFiles.map(f => {
+        const tagClass = `tag-${f.layerKey === 'config' ? 'tooling' : f.layerKey}`;
+        const symsHtml = f.symbols.map((s, idx) => `
+          <article class="sym-card" id="sym-${f.id}-${idx}">
+            <div class="sym-head">
+              <span class="sym-name">${escapeHtml(s.name)}</span>
+              <div class="sym-badges">
+                <span class="kind-badge kind-${s.kind}">${escapeHtml(s.kind)}</span>
+                <span class="tag">${escapeHtml(s.lines)}</span>
+              </div>
+            </div>
+            <div class="sym-sig">${escapeHtml(s.sig)}</div>
+            <p class="sym-desc">${escapeHtml(s.desc)}</p>
+            <div class="sym-io"><strong>Inputs / Side Effects:</strong> ${escapeHtml(s.io)}</div>
+          </article>
+        `).join('');
+
+        return `
+          <section class="file-card" id="file-${f.id}">
+            <div class="file-header">
+              <div>
+                <div class="file-path">${escapeHtml(f.path)}</div>
+              </div>
+              <div class="file-meta">
+                <span class="tag ${tagClass}">${escapeHtml(f.layer)}</span>
+                <span class="tag">${f.loc} LOC</span>
+                <span class="tag">${f.symbols.length} entries</span>
+              </div>
+            </div>
+            <div class="file-body">
+              <p class="file-role">${escapeHtml(f.role)}</p>
+              <div class="file-deps">
+                <strong>Dependencies:</strong> <code>${escapeHtml(f.deps)}</code><br/>
+                <strong>State / Constants:</strong> <code>${escapeHtml(f.state)}</code>
+              </div>
+              <div class="sym-list">${symsHtml}</div>
+            </div>
+          </section>
+        `;
+      }).join('');
+
+      document.querySelectorAll('.side-file').forEach(a => {
+        a.addEventListener('click', () => {
+          state.activeFile = a.getAttribute('data-file-id');
+          document.querySelectorAll('.side-file').forEach(el => el.classList.remove('active'));
+          a.classList.add('active');
+        });
+      });
+    }
+
+    document.getElementById('searchInput').addEventListener('input', (e) => {
+      state.query = e.target.value;
+      renderAll();
+    });
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key === '/' && document.activeElement !== document.getElementById('searchInput')) {
+        e.preventDefault();
+        document.getElementById('searchInput').focus();
+      }
+    });
+
+    const themeBtn = document.getElementById('themeToggle');
+    themeBtn.addEventListener('click', () => {
+      const html = document.documentElement;
+      const next = html.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+      html.setAttribute('data-theme', next);
+      themeBtn.textContent = next === 'dark' ? 'Light Mode' : 'Dark Mode';
+    });
+
+    renderFilters();
+    renderAll();
+  </script>
+</body>
+</html>

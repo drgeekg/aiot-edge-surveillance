@@ -1,0 +1,40 @@
+{
+  "schemaVersion": 1,
+  "ok": true,
+  "command": "finalize",
+  "status": "pass",
+  "type": "explainer",
+  "quality": "showcase",
+  "specification": {
+    "path": "C:\\Users\\Ganesh\\Desktop\\AIIot project\\.archify\\explainer-codebase-overview-20261114-212500\\candidate.archify.md",
+    "sha256": "03c201c6aaaf872bc9bbb1b4043c9221c453652259696b24c33fb9bf18a1d2d8",
+    "bytes": 4935
+  },
+  "artifact": {
+    "path": "C:\\Users\\Ganesh\\Desktop\\AIIot project\\docs\\diagrams\\codebase-overview.html",
+    "sha256": "e65419786612de6fe10460ebcfa19109377dd46a0c4f51f72f0a94644dd1d787",
+    "bytes": 935495
+  },
+  "gates": {
+    "validate": "pass",
+    "deliver": "pass",
+    "check": "pass",
+    "browser-check": "not-run"
+  },
+  "diagnostics": [],
+  "diagnosticSummary": {
+    "total": 0,
+    "shown": 0,
+    "truncated": false
+  },
+  "evidence": {
+    "receipt": "C:\\Users\\Ganesh\\Desktop\\AIIot project\\docs\\diagrams\\codebase-overview.finalize.json",
+    "summaryReceipt": "C:\\Users\\Ganesh\\Desktop\\AIIot project\\docs\\diagrams\\codebase-overview.finalize-summary.json"
+  },
+  "visualReview": "not-requested",
+  "durationMs": 6517,
+  "browserCheck": {
+    "requested": false,
+    "ran": false
+  }
+}

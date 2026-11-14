@@ -1,0 +1,69 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "Edge-to-Server CV Anomaly Processing Workflow",
+    "output": "docs/diagrams/pipeline-workflow.html",
+    "quality_profile": "showcase"
+  },
+  "lanes": [
+    { "id": "edge", "label": "Edge Capture Node" },
+    { "id": "ingest", "label": "FastAPI Ingest Gateway" },
+    { "id": "cv", "label": "CV Worker & Pipeline" },
+    { "id": "rules", "label": "Tracker, Rules & Alerts", "variant": "exception" }
+  ],
+  "phases": [
+    { "id": "capture_phase", "label": "Capture & Encode", "fromCol": 0, "toCol": 1 },
+    { "id": "transport_phase", "label": "Auth, Gate & Queue", "fromCol": 2, "toCol": 3, "variant": "emphasis" },
+    { "id": "inference_phase", "label": "Inference, Tracking & Rules", "fromCol": 4, "toCol": 5, "variant": "dashed" }
+  ],
+  "mainPath": ["cam_read", "fps_throttle", "http_post", "validate_queue", "decode_yolo", "debounce_r1", "track_r2_r3", "anomaly_fire"],
+  "nodes": [
+    { "id": "cam_read", "lane": "edge", "col": 0, "type": "external", "label": "Read Frame", "sublabel": "VideoSource.read()", "tag": "BUFFERSIZE=1" },
+    { "id": "fps_throttle", "lane": "edge", "col": 1, "type": "backend", "label": "Throttle & JPEG", "sublabel": "5 FPS / 640px JPEG", "tag": "q=70 (~25KB)" },
+    { "id": "http_post", "lane": "ingest", "col": 2, "type": "cloud", "label": "POST /frames", "sublabel": "X-API-Key & <=2MB", "tag": "SOF <=4096px" },
+    { "id": "validate_queue", "lane": "ingest", "col": 3, "type": "messagebus", "label": "Bounded Queue", "sublabel": "drop-oldest (maxsize=8)", "tag": "202 Accepted" },
+    { "id": "decode_yolo", "lane": "cv", "col": 3, "type": "backend", "label": "Decode & YOLO26n", "sublabel": "cv2 + ONNXRuntimeDetector", "tag": "27.6ms CPU" },
+    { "id": "debounce_r1", "lane": "cv", "col": 4, "type": "database", "label": "Debounce & R1", "sublabel": "insert_event + >3 persons", "tag": "2s debounce" },
+    { "id": "track_r2_r3", "lane": "rules", "col": 4, "type": "backend", "label": "Track & R2 / R3", "sublabel": "Owner bind & 15s timeout", "tag": "per-track cooldown" },
+    { "id": "anomaly_fire", "lane": "rules", "col": 5, "type": "security", "label": "Log & Fire Alert", "sublabel": "insert_anomaly + alerts.fire", "tag": "overlay + metric" }
+  ],
+  "edges": [
+    { "id": "e-read-throttle", "from": "cam_read", "to": "fps_throttle", "variant": "default" },
+    { "id": "e-throttle-post", "from": "fps_throttle", "to": "http_post", "label": "HTTP JPEG", "variant": "emphasis" },
+    { "id": "e-post-queue", "from": "http_post", "to": "validate_queue", "label": "valid frame", "variant": "default" },
+    { "id": "e-queue-decode", "from": "validate_queue", "to": "decode_yolo", "label": "dequeue", "variant": "default" },
+    { "id": "e-decode-debounce", "from": "decode_yolo", "to": "debounce_r1", "label": "boxes (conf>=0.30)", "variant": "default" },
+    { "id": "e-debounce-track", "from": "debounce_r1", "to": "track_r2_r3", "label": "RuleEngine.update", "variant": "emphasis" },
+    { "id": "e-track-alert", "from": "track_r2_r3", "to": "anomaly_fire", "label": "R1/R2/R3 breach", "variant": "security" }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Edge Capture & Security Gate",
+      "items": [
+        "VideoSource sets CAP_PROP_BUFFERSIZE=1 on live cameras and loops MP4 files on EOF without per-frame seeks",
+        "POST /frames checks X-API-Key, Content-Length <= 2 MB prior to body read, and JPEG SOF dimensions <= 4096x4096",
+        "Enqueues into bounded queue (maxsize=8) with drop-oldest policy and returns 202 Accepted"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "Debounce, R1 & Hysteresis Tracking",
+      "items": [
+        "ingest_detections() logs debounced detection events (1 row per class per 2s) to SQLite events table",
+        "RuleEngine evaluates R1 occupancy spike (>3 persons with conf >= 0.40) first",
+        "Tracker updates person and watch-object tracks with confidence hysteresis (enter 0.40, stay 0.30) and 15s timeout"
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "Per-Track R2/R3 Evaluation & Telemetry",
+      "items": [
+        "Evaluates R2 (>=5s lifetime) and R3 (>=30s unattended) across all active tracks, including briefly occluded bags",
+        "Cooldown (10s) is keyed by (rule, track_id) so multiple bags trigger independent alerts",
+        "Worker draws bounding boxes and active alert border, updates latest_frames, and records frame_metrics"
+      ]
+    }
+  ]
+}

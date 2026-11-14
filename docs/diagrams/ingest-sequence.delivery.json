@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 1,
+  "receiptId": "65d98ebe-2592-4238-b9c6-6a52040e97a2",
+  "status": "current",
+  "command": "deliver",
+  "type": "sequence",
+  "input": "C:\\Users\\Ganesh\\Desktop\\AIIot project\\.archify\\sequence-candidate.json",
+  "output": "C:\\Users\\Ganesh\\Desktop\\AIIot project\\docs\\diagrams\\ingest-sequence.html",
+  "specification": {
+    "sha256": "570fe5b576a7b4de145fab3e79b290bf2ac5e82ca79f6b4aa1d6c17f05cc83bc",
+    "bytes": 4875
+  },
+  "artifact": {
+    "sha256": "bc509148f03c2684bc17f485bc81eb160725b291fd20291a361e4707b3096071",
+    "bytes": 844942
+  }
+}

@@ -1,0 +1,10 @@
+.venv/
+events.db*
+.pytest_cache/
+.playwright-cli/
+__pycache__/
+data/edge_state.json
+frontend/node_modules/
+frontend/dist/
+
+.env

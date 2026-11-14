@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 1,
+  "receiptId": "cb8bb806-1723-4dc7-82c9-e6001ebdb22d",
+  "status": "current",
+  "command": "deliver",
+  "type": "sequence",
+  "input": "C:\\Users\\Ganesh\\Desktop\\AIIot project\\.archify\\auth-security-candidate.json",
+  "output": "C:\\Users\\Ganesh\\Desktop\\AIIot project\\docs\\diagrams\\auth-and-ingest-security.html",
+  "specification": {
+    "sha256": "e8981acb25e092e6bdecfefc689ed66f69574a81d0cc7a1a50a58c57c7f8fb1a",
+    "bytes": 4466
+  },
+  "artifact": {
+    "sha256": "826076777711ac95c2e919dfb31255ab2432ab958067eaab79235cc2855529cc",
+    "bytes": 839542
+  }
+}

@@ -1,0 +1,65 @@
+{
+  "schema_version": 1,
+  "diagram_type": "tree",
+  "meta": {
+    "title": "Edge Anomaly Detection Repository Structure",
+    "output": "docs/diagrams/project-structure.html",
+    "quality_profile": "showcase"
+  },
+  "layout": {
+    "direction": "right"
+  },
+  "nodes": [
+    { "id": "root", "label": "AIIot Project", "sublabel": "Edge-to-Server CV Anomaly System" },
+    { "id": "edge_subsystem", "parent": "root", "label": "Edge Package", "sublabel": "edge/" },
+    { "id": "server_subsystem", "parent": "root", "label": "Server Package", "sublabel": "server/" },
+    { "id": "frontend_subsystem", "parent": "root", "label": "React Frontends", "sublabel": "frontend/src/" },
+    { "id": "scripts_tests", "parent": "root", "label": "Scripts & Tests", "sublabel": "scripts/ & tests/" },
+    { "id": "data_docs", "parent": "root", "label": "Config, Data & Docs", "sublabel": "root, data/ & docs/" },
+
+    { "id": "edge_capture", "parent": "edge_subsystem", "label": "capture.py", "sublabel": "VideoSource (live/file/url)" },
+    { "id": "edge_client", "parent": "edge_subsystem", "label": "edge_client.py", "sublabel": "Standalone HTTP streamer CLI" },
+    { "id": "edge_controller", "parent": "edge_subsystem", "label": "controller.py", "sublabel": "EdgeEmitterController & state" },
+
+    { "id": "server_app", "parent": "server_subsystem", "label": "app.py", "sublabel": "FastAPI ingest, auth & REST API" },
+    { "id": "server_worker", "parent": "server_subsystem", "label": "worker.py", "sublabel": "CV worker thread & annotation" },
+    { "id": "server_pipeline", "parent": "server_subsystem", "label": "pipeline.py", "sublabel": "DeviceState & ingest_detections" },
+    { "id": "server_detector", "parent": "server_subsystem", "label": "detector.py", "sublabel": "ONNXRuntimeDetector (YOLO26n)" },
+    { "id": "server_tracker", "parent": "server_subsystem", "label": "tracker.py", "sublabel": "Tracker & Track (owner bind)" },
+    { "id": "server_rules", "parent": "server_subsystem", "label": "rules.py", "sublabel": "RuleEngine (R1 / R2 / R3)" },
+    { "id": "server_db", "parent": "server_subsystem", "label": "db.py", "sublabel": "SQLite WAL persistence" },
+    { "id": "server_alerts", "parent": "server_subsystem", "label": "alerts.py", "sublabel": "Console banner, beep & flag" },
+
+    { "id": "fe_analytics", "parent": "frontend_subsystem", "label": "AnalyticsApp.jsx", "sublabel": "Server Analytics Console (:5173)" },
+    { "id": "fe_edge", "parent": "frontend_subsystem", "label": "EdgeEmitterApp.jsx", "sublabel": "Edge Control Deck (:5174)" },
+    { "id": "fe_shell", "parent": "frontend_subsystem", "label": "GlassShell.jsx", "sublabel": "Shared cursor, tabs & header" },
+
+    { "id": "scr_sim", "parent": "scripts_tests", "label": "simulator.py", "sublabel": "90s scripted POST /events" },
+    { "id": "scr_export", "parent": "scripts_tests", "label": "export_model.py", "sublabel": "YOLO26n ONNX exporter/loader" },
+    { "id": "tst_rules", "parent": "scripts_tests", "label": "test_rules.py", "sublabel": "12 pytest unit & security tests" },
+
+    { "id": "cfg_files", "parent": "data_docs", "label": "config.yaml & pytest.ini", "sublabel": "Runtime & test configuration" },
+    { "id": "data_files", "parent": "data_docs", "label": "data/ & yolo26n.onnx", "sublabel": "demo.mp4, edge_state.json, model" },
+    { "id": "docs_files", "parent": "data_docs", "label": "docs/ & diagrams/", "sublabel": "Markdown specs & 12 Archify HTMLs" }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Clean Module Boundaries",
+      "items": [
+        "edge/ handles OpenCV capture, JPEG compression, HTTP streaming, and atomic state persistence",
+        "server/ encapsulates FastAPI security gates, bounded queue, ONNX inference, tracking, rules, and SQLite WAL",
+        "frontend/ provides two Vite React apps (:5173 Analytics Console, :5174 Edge Emitter Deck) polling REST APIs"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "Verification & Tooling",
+      "items": [
+        "tests/test_rules.py + pytest.ini validate R1/R2/R3 rules, owner binding, occlusion, hysteresis, and API security",
+        "scripts/simulator.py exercises the full rule and database pipeline via POST /events without a camera",
+        "scripts/test_frontends.js runs automated headless Playwright verification across both React consoles"
+      ]
+    }
+  ]
+}

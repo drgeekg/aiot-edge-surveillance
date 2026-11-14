@@ -1,0 +1,41 @@
+{
+  "schemaVersion": 1,
+  "ok": true,
+  "command": "finalize",
+  "status": "pass",
+  "type": "waterfall",
+  "quality": "showcase",
+  "specification": {
+    "path": "C:\\Users\\Ganesh\\Desktop\\AIIot project\\.archify\\waterfall-candidate.json",
+    "sha256": "6ef471d0faee59046ac0f1db5e063f7d9fe43cda94509d2cd1184907f0aae487",
+    "bytes": 3337
+  },
+  "artifact": {
+    "path": "C:\\Users\\Ganesh\\Desktop\\AIIot project\\docs\\diagrams\\frame-latency.html",
+    "sha256": "be14e1f64dd05e0396f79fa7d436fabe0de978c17e4a48d2716646171302f9d5",
+    "bytes": 840662
+  },
+  "gates": {
+    "validate": "pass",
+    "deliver": "pass",
+    "check": "pass",
+    "browser-check": "pass"
+  },
+  "diagnostics": [],
+  "diagnosticSummary": {
+    "total": 0,
+    "shown": 0,
+    "truncated": false
+  },
+  "evidence": {
+    "receipt": "C:\\Users\\Ganesh\\Desktop\\AIIot project\\docs\\diagrams\\frame-latency.finalize.json",
+    "summaryReceipt": "C:\\Users\\Ganesh\\Desktop\\AIIot project\\docs\\diagrams\\frame-latency.finalize-summary.json",
+    "browserCheckReceipt": "C:\\Users\\Ganesh\\Desktop\\AIIot project\\docs\\diagrams\\frame-latency.browser-check.json"
+  },
+  "visualReview": "not-requested",
+  "durationMs": 11382,
+  "browserCheck": {
+    "requested": true,
+    "ran": true
+  }
+}

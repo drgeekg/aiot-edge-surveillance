@@ -1,0 +1,67 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Edge-to-Server Anomaly Detection System Architecture",
+    "output": "docs/diagrams/system-architecture.html",
+    "quality_profile": "showcase"
+  },
+  "components": [
+    { "id": "cam", "type": "external", "label": "Video Input", "sublabel": "Webcam / MP4 / RTSP", "pos": [40, 220], "size": [135, 60] },
+    { "id": "edge", "type": "backend", "label": "Edge Streamer", "sublabel": "capture.py & edge_client.py", "tag": "640px JPEG q=70", "pos": [220, 220], "size": [150, 60] },
+    { "id": "sim", "type": "external", "label": "Simulator CLI", "sublabel": "scripts/simulator.py", "tag": "POST /events", "pos": [220, 80], "size": [150, 60] },
+    { "id": "dashboard", "type": "frontend", "label": "React Consoles", "sublabel": "Analytics :5173 / Edge :5174", "tag": "Vite REST Polling", "pos": [220, 360], "size": [155, 60] },
+    { "id": "api", "type": "backend", "label": "FastAPI Gateway", "sublabel": "server/app.py :8000", "tag": "X-API-Key & Bounds", "pos": [430, 220], "size": [150, 60] },
+    { "id": "queue", "type": "messagebus", "label": "Bounded Queue", "sublabel": "Drop-oldest (maxsize=8)", "tag": "202 Accepted", "pos": [625, 220], "size": [140, 60] },
+    { "id": "worker", "type": "backend", "label": "CV Worker Thread", "sublabel": "server/worker.py", "tag": "Decode & Annotate", "pos": [810, 220], "size": [145, 60] },
+    { "id": "detector", "type": "cloud", "label": "YOLO26n ONNX", "sublabel": "server/detector.py", "tag": "CPU 27.6ms", "pos": [810, 80], "size": [145, 60] },
+    { "id": "pipeline", "type": "backend", "label": "Pipeline & Rules", "sublabel": "pipeline.py + rules.py", "tag": "Tracker & R1/R2/R3", "pos": [1000, 220], "size": [150, 60] },
+    { "id": "db", "type": "database", "label": "SQLite (events.db)", "sublabel": "server/db.py (WAL)", "tag": "3 Tables", "pos": [1000, 360], "size": [150, 60] },
+    { "id": "alerts", "type": "security", "label": "Alert Dispatcher", "sublabel": "server/alerts.py", "tag": "Beep & Banner", "pos": [1000, 80], "size": [150, 60] }
+  ],
+  "boundaries": [
+    { "kind": "security-group", "label": "Edge Capture Node (Standalone Process)", "wraps": ["cam", "edge"] },
+    { "kind": "region", "label": "Server Host (:8000)", "wraps": ["api", "queue", "worker", "detector", "pipeline", "db", "alerts"] }
+  ],
+  "connections": [
+    { "id": "cam-to-edge", "from": "cam", "to": "edge", "label": "BGR frames", "variant": "default" },
+    { "id": "edge-to-api", "from": "edge", "to": "api", "label": "POST /frames", "variant": "emphasis" },
+    { "id": "sim-to-api", "from": "sim", "to": "api", "label": "POST /events", "variant": "dashed" },
+    { "id": "api-to-queue", "from": "api", "to": "queue", "label": "enqueue", "variant": "default" },
+    { "id": "queue-to-worker", "from": "queue", "to": "worker", "label": "dequeue", "variant": "default" },
+    { "id": "worker-to-detector", "from": "worker", "to": "detector", "label": "detect(bgr)", "variant": "default" },
+    { "id": "worker-to-pipeline", "from": "worker", "to": "pipeline", "label": "ingest", "variant": "emphasis" },
+    { "id": "pipeline-to-db", "from": "pipeline", "to": "db", "label": "log WAL", "variant": "default" },
+    { "id": "pipeline-to-alerts", "from": "pipeline", "to": "alerts", "label": "fire R1/R2/R3", "variant": "security" },
+    { "id": "api-to-dashboard", "from": "api", "to": "dashboard", "label": "REST JSON/JPEG", "variant": "emphasis" }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Secured Edge Ingestion",
+      "items": [
+        "Edge captures video, resizes to 640px, encodes JPEG (q=70), and streams at 5 FPS",
+        "FastAPI verifies X-API-Key, Content-Length <= 2 MB, and JPEG SOF dimensions <= 4096x4096",
+        "Optional EMBEDDED_EDGE=1 runs EdgeEmitterController in-process with atomic state persistence"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "CV Worker & Owner-Bound Tracker",
+      "items": [
+        "Worker thread consumes bounded drop-oldest queue (maxsize=8) and runs YOLO26n ONNX (27.6ms)",
+        "Tracker uses confidence hysteresis (enter 0.40, stay 0.30) and 15s occlusion retention",
+        "Binds initial nearby person as owner; resets dwell clock on owner return or stationary >= 2s"
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "Per-Track Rules, WAL DB & React Consoles",
+      "items": [
+        "R1 (>3 persons), R2 (watch object >= 5s), and R3 (unattended dwell >= 30s) with per-track cooldown",
+        "SQLite WAL stores events, anomalies, and frame_metrics without blocking concurrent API reads",
+        "Dual Vite React consoles (:5173 Analytics, :5174 Edge Deck) poll REST endpoints with CORS lock"
+      ]
+    }
+  ]
+}

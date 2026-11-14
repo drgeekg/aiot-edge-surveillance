@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 1,
+  "receiptId": "5f82d47e-ab2c-4af7-a8db-dd1e9a8ca2c6",
+  "status": "current",
+  "command": "deliver",
+  "type": "workflow",
+  "input": "C:\\Users\\Ganesh\\Desktop\\AIIot project\\.archify\\workflow-candidate.json",
+  "output": "C:\\Users\\Ganesh\\Desktop\\AIIot project\\docs\\diagrams\\pipeline-workflow.html",
+  "specification": {
+    "sha256": "ace00ec1529578b7125010f9138e68a701eed6af052da530d0b85c370b7272fd",
+    "bytes": 4503
+  },
+  "artifact": {
+    "sha256": "22a89b590bad878b72616a785131e5779df48cd7740539755cd5f82cf8369708",
+    "bytes": 845748
+  }
+}

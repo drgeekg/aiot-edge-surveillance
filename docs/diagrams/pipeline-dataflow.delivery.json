@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 1,
+  "receiptId": "e486856f-8644-4489-b7ca-1c106b237c40",
+  "status": "current",
+  "command": "deliver",
+  "type": "dataflow",
+  "input": "C:\\Users\\Ganesh\\Desktop\\AIIot project\\.archify\\dataflow-candidate.json",
+  "output": "C:\\Users\\Ganesh\\Desktop\\AIIot project\\docs\\diagrams\\pipeline-dataflow.html",
+  "specification": {
+    "sha256": "75d1cb4a5c8f99bd27cbaa0f2a3ff5537de7b8902160969ea2360c73a731f256",
+    "bytes": 4490
+  },
+  "artifact": {
+    "sha256": "340f290c30c80059fa2aef2434a1cb84935be0837e8c122966d8fc26526a0666",
+    "bytes": 843727
+  }
+}

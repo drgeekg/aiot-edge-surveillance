@@ -1,0 +1,71 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "API Authentication & Frame Ingest Security Gate",
+    "output": "docs/diagrams/auth-and-ingest-security.html",
+    "quality_profile": "showcase"
+  },
+  "participants": [
+    { "id": "client", "type": "external", "label": "Edge / UI Client", "sublabel": "HTTP Caller" },
+    { "id": "cors", "type": "security", "label": "CORS Middleware", "sublabel": ":5173 & :5174 only" },
+    { "id": "auth", "type": "security", "label": "verify_api_key()", "sublabel": "X-API-Key / 0.0.0.0" },
+    { "id": "gate", "type": "security", "label": "Payload & SOF Gate", "sublabel": "<=2MB & <=4096px" },
+    { "id": "cfg_val", "type": "security", "label": "EdgeConfigUpdate", "sublabel": "Pydantic & Source" },
+    { "id": "queue", "type": "messagebus", "label": "Queue / Controller", "sublabel": "Protected State" }
+  ],
+  "segments": [
+    { "from": 150, "to": 360, "label": "POST /frames: Auth, Content-Length & JPEG SOF Dimension Gate" },
+    { "from": 375, "to": 540, "label": "POST /edge/config: Auth, Parameter Bounds & Source Allowlist" }
+  ],
+  "messages": [
+    { "id": "s1", "from": "client", "to": "cors", "y": 160, "label": "POST /frames (Origin, X-API-Key, Content-Length)", "variant": "emphasis" },
+    { "id": "s2", "from": "cors", "to": "auth", "y": 195, "label": "check X-API-Key vs AIIOT_API_KEY / host", "variant": "security" },
+    { "id": "s3", "from": "auth", "to": "gate", "y": 230, "label": "check Content-Length <= 2 MB BEFORE body()", "variant": "security" },
+    { "id": "s4", "from": "gate", "to": "client", "y": 265, "label": "401 Unauthorized / 413 Too Large / 400 SOF > 4096px", "variant": "return" },
+    { "id": "s5", "from": "gate", "to": "queue", "y": 305, "label": "put_nowait(valid JPEG <= 4096x4096)", "variant": "default" },
+    { "id": "s6", "from": "queue", "to": "client", "y": 340, "label": "202 Accepted {status: queued}", "variant": "return" },
+    { "id": "s7", "from": "client", "to": "auth", "y": 390, "label": "POST /edge/config {source, fps, width, quality}", "variant": "emphasis" },
+    { "id": "s8", "from": "auth", "to": "cfg_val", "y": 425, "label": "validate bounds & validate_source(source)", "variant": "security" },
+    { "id": "s9", "from": "cfg_val", "to": "client", "y": 460, "label": "422 Unprocessable (traversal / out-of-bounds)", "variant": "return" },
+    { "id": "s10", "from": "cfg_val", "to": "queue", "y": 495, "label": "update_config() + atomic os.replace state", "variant": "default" },
+    { "id": "s11", "from": "queue", "to": "client", "y": 525, "label": "200 OK (updated edge status)", "variant": "return" }
+  ],
+  "activations": [
+    { "participant": "client", "from": 155, "to": 530, "type": "external" },
+    { "participant": "cors", "from": 158, "to": 200, "type": "security" },
+    { "participant": "auth", "from": 190, "to": 430, "type": "security" },
+    { "participant": "gate", "from": 225, "to": 310, "type": "security" },
+    { "participant": "cfg_val", "from": 420, "to": 500, "type": "security" },
+    { "participant": "queue", "from": 300, "to": 530, "type": "messagebus" }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Authentication & CORS Hardening",
+      "items": [
+        "verify_api_key() enforces X-API-Key header on POST /frames, POST /events, and POST /edge/config",
+        "Optional on localhost when AIIOT_API_KEY is unset; strictly required when bound to 0.0.0.0 or remote host",
+        "CORS allow_origins restricted to http://localhost:5173 and http://localhost:5174"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "Decompression-Bomb & Memory Protection",
+      "items": [
+        "Content-Length header is checked against 2 MB BEFORE awaiting request.body() to prevent RAM exhaustion",
+        "_get_jpeg_dimensions() parses JPEG SOF markers and rejects images wider or taller than 4096px",
+        "Worker thread also verifies decoded ndarray dimensions <= 4096x4096 before ONNX inference"
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "Config Bounds & Path-Traversal Prevention",
+      "items": [
+        "EdgeConfigUpdate enforces fps in [0.5, 30.0], width in [160, 1920], and quality in [10, 100]",
+        "validate_source() restricts file sources to data/*.mp4 (verified via os.path.commonpath), camera index, or http/https/rtsp",
+        "Blocks local file probing (../secret.mp4, C:/Windows/...) and arbitrary file:// URIs"
+      ]
+    }
+  ]
+}

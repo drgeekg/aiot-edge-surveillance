@@ -1,0 +1,188 @@
+edge:
+  device_id: edge-01
+  fps: 5
+  width: 960
+  jpeg_quality: 90
+
+server:
+  queue_size: 8
+  conf: 0.4
+  conf_stay: 0.3
+  process_every_n_frames: 1
+  debounce_seconds: 2
+  confirm_frames: 1
+  class_thresholds:
+    person: 0.40
+    backpack: 0.30
+    handbag: 0.30
+    suitcase: 0.30
+    knife: 0.35
+    scissors: 0.35
+
+mode: public
+arming: armed_night
+
+rules:
+  person_threshold: 3
+  watch_classes:
+    - backpack
+    - handbag
+    - suitcase
+  unexpected_seconds: 5
+  dwell_seconds: 30
+  owner_radius: 0.20
+  track_timeout: 15
+  cooldown_seconds: 10
+  confirm_frames: 1
+  offline_seconds: 30
+  tamper_dark_lum: 15.0
+  tamper_blur_var: 20.0
+  tamper_for_seconds: 5.0
+  repeat_escalation_count: 3
+  repeat_escalation_window_s: 600
+
+home:
+  watch_classes:
+    - person
+    - dog
+    - cat
+    - backpack
+    - handbag
+    - suitcase
+    - car
+    - motorcycle
+    - truck
+    - knife
+    - scissors
+    - laptop
+    - tv
+    - cell phone
+  ignore_classes:
+    - dog
+    - cat
+  package_classes:
+    - backpack
+    - handbag
+    - suitcase
+  valuable_classes:
+    - laptop
+    - tv
+  night:
+    start: "22:00"
+    end: "06:00"
+  zones:
+    door:
+      polygon: [[0.10, 0.35], [0.55, 0.35], [0.55, 1.00], [0.10, 1.00]]
+      kind: entry
+      min_s: 2.0
+      loiter_s: 20.0
+      severity: warning
+    window:
+      polygon: [[0.55, 0.20], [0.90, 0.20], [0.90, 0.65], [0.55, 0.65]]
+      kind: interior
+      min_s: 2.0
+      loiter_s: 15.0
+      severity: critical
+    yard:
+      polygon: [[0.00, 0.30], [1.00, 0.30], [1.00, 1.00], [0.00, 1.00]]
+      kind: exterior
+      min_s: 3.0
+      loiter_s: 60.0
+      severity: warning
+    driveway:
+      polygon: [[0.60, 0.40], [1.00, 0.40], [1.00, 1.00], [0.60, 1.00]]
+      kind: driveway
+      min_s: 2.0
+      loiter_s: 600.0
+      severity: info
+    fence_line:
+      polygon: [[0.00, 0.15], [1.00, 0.15], [1.00, 0.30], [0.00, 0.30]]
+      kind: perimeter
+      min_s: 2.0
+      loiter_s: 15.0
+      severity: warning
+    pool:
+      polygon: [[0.70, 0.70], [0.95, 0.70], [0.95, 0.95], [0.70, 0.95]]
+      kind: hazard
+      min_s: 1.0
+      loiter_s: 10.0
+      severity: critical
+  lines:
+    gate_in:
+      p1: [0.50, 0.00]
+      p2: [0.50, 1.00]
+      allowed: left_to_right
+  person_down_s: 10.0
+  person_down_ratio: 1.2
+  inactivity_s: 1800.0
+  package_still_s: 10.0
+  package_taken_grace_s: 3.0
+  valuable_present_s: 300.0
+  valuable_gone_s: 5.0
+  vehicle_linger_s: 600.0
+  sharp_radius: 0.15
+  casing_visits: 3
+  casing_window_s: 1800.0
+  min_adult_h: 0.25
+
+public:
+  person_threshold: 3
+  watch_classes:
+    - backpack
+    - handbag
+    - suitcase
+  unexpected_seconds: 5
+  dwell_seconds: 30
+  owner_radius: 0.20
+  owner_gone_s: 20.0
+  loiter_s: 120.0
+  person_down_s: 10.0
+  person_down_ratio: 1.2
+  running_speed: 0.35
+  rapid_gather_pct: 100.0
+  rapid_gather_window_s: 10.0
+  rapid_gather_min_count: 4
+  sudden_dispersal_pct: 60.0
+  sudden_dispersal_window_s: 5.0
+  sudden_dispersal_min_prev: 5
+  unattended_multi_count: 2
+  capacity_limit: 20
+  operating_hours:
+    start: "08:00"
+    end: "22:00"
+  zones:
+    restricted:
+      polygon: [[0.00, 0.00], [0.30, 0.00], [0.30, 0.40], [0.00, 0.40]]
+      kind: restricted
+      min_s: 2.0
+      severity: critical
+    pedestrian:
+      polygon: [[0.10, 0.40], [0.90, 0.40], [0.90, 1.00], [0.10, 1.00]]
+      kind: pedestrian
+      crowd_limit: 6
+    no_parking:
+      polygon: [[0.65, 0.20], [1.00, 0.20], [1.00, 0.60], [0.65, 0.60]]
+      kind: no_parking
+      still_s: 300.0
+    no_wheels:
+      polygon: [[0.20, 0.50], [0.80, 0.50], [0.80, 0.90], [0.20, 0.90]]
+      kind: no_wheels
+    queue:
+      polygon: [[0.30, 0.30], [0.60, 0.30], [0.60, 0.80], [0.30, 0.80]]
+      kind: queue
+      limit: 5
+      wait_s: 60.0
+  lines:
+    corridor:
+      p1: [0.50, 0.00]
+      p2: [0.50, 1.00]
+      allowed: left_to_right
+
+agent:
+  enabled: true
+  provider: nvidia
+  model: nvidia/nemotron-3-ultra-550b-a55b
+  base_url: https://integrate.api.nvidia.com/v1
+  timeout_s: 20.0
+  async_dispatch: true
+  hermes_webhook_url: http://127.0.0.1:8644/webhooks/house-alert

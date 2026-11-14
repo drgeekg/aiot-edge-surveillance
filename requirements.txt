@@ -1,0 +1,13 @@
+fastapi==0.162.2
+uvicorn==0.54.0
+onnxruntime==1.31.1
+opencv-python==5.0.0.93
+numpy==2.5.4
+requests==2.34.2
+pyyaml==6.0.3
+pytest==9.2.0
+yt-dlp==2026.10.26
+langgraph
+langchain-openai
+langchain-ollama
+python-dotenv

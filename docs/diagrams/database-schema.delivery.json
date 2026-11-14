@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 1,
+  "receiptId": "e6df7e59-f741-4973-a8c4-4bd51e6e4480",
+  "status": "current",
+  "command": "deliver",
+  "type": "erd",
+  "input": "C:\\Users\\Ganesh\\Desktop\\AIIot project\\.archify\\erd-candidate.json",
+  "output": "C:\\Users\\Ganesh\\Desktop\\AIIot project\\docs\\diagrams\\database-schema.html",
+  "specification": {
+    "sha256": "884da3a5aa8e26a9c1fce63f9e286ac58f84ca92118918d499c6ab56f025c27f",
+    "bytes": 3300
+  },
+  "artifact": {
+    "sha256": "f367adfb82329f54205e6933ca8fcfd5d415da608a54325e095ba4584cc8a864",
+    "bytes": 841174
+  }
+}

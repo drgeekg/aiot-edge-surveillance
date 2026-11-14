@@ -1,0 +1,41 @@
+{
+  "schemaVersion": 1,
+  "ok": true,
+  "command": "finalize",
+  "status": "pass",
+  "type": "erd",
+  "quality": "showcase",
+  "specification": {
+    "path": "C:\\Users\\Ganesh\\Desktop\\AIIot project\\.archify\\erd-candidate.json",
+    "sha256": "884da3a5aa8e26a9c1fce63f9e286ac58f84ca92118918d499c6ab56f025c27f",
+    "bytes": 3300
+  },
+  "artifact": {
+    "path": "C:\\Users\\Ganesh\\Desktop\\AIIot project\\docs\\diagrams\\database-schema.html",
+    "sha256": "f367adfb82329f54205e6933ca8fcfd5d415da608a54325e095ba4584cc8a864",
+    "bytes": 841174
+  },
+  "gates": {
+    "validate": "pass",
+    "deliver": "pass",
+    "check": "pass",
+    "browser-check": "pass"
+  },
+  "diagnostics": [],
+  "diagnosticSummary": {
+    "total": 0,
+    "shown": 0,
+    "truncated": false
+  },
+  "evidence": {
+    "receipt": "C:\\Users\\Ganesh\\Desktop\\AIIot project\\.archify\\rev-erd2\\database-schema.finalize.json",
+    "summaryReceipt": "C:\\Users\\Ganesh\\Desktop\\AIIot project\\.archify\\rev-erd2\\database-schema.finalize-summary.json",
+    "browserCheckReceipt": "C:\\Users\\Ganesh\\Desktop\\AIIot project\\.archify\\rev-erd2\\database-schema.browser-check.json"
+  },
+  "visualReview": "not-requested",
+  "durationMs": 5597,
+  "browserCheck": {
+    "requested": true,
+    "ran": true
+  }
+}

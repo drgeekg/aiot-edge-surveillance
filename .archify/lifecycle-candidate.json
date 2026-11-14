@@ -1,0 +1,63 @@
+{
+  "schema_version": 3,
+  "diagram_type": "lifecycle",
+  "meta": {
+    "title": "Anomaly Detection & Unattended Object Lifecycle",
+    "output": "docs/diagrams/anomaly-lifecycle.html",
+    "quality_profile": "showcase"
+  },
+  "mainPath": ["detected", "tracking", "unexpected_warn", "dwell_alert", "resolved"],
+  "states": [
+    { "id": "detected", "type": "start", "label": "Detected", "sublabel": "conf >= 0.40 enter", "tag": "bind owner_id", "step": "01" },
+    { "id": "tracking", "type": "active", "label": "Tracked", "sublabel": "conf >= 0.30 stay", "tag": "unattended clock", "step": "02" },
+    { "id": "unexpected_warn", "type": "decision", "label": "Unexpected (R2)", "sublabel": "lifetime >= 5s", "tag": "warning", "step": "03" },
+    { "id": "dwell_alert", "type": "failure", "label": "Dwell Alert (R3)", "sublabel": "unattended >= 30s", "tag": "critical", "step": "04" },
+    { "id": "resolved", "type": "success", "label": "Cleared", "sublabel": "removed > 15s", "tag": "resolved", "step": "05" },
+    { "id": "owner_reset", "type": "waiting", "label": "Owner / Stationary", "sublabel": "owner or >=2s near", "tag": "reset to 0s" },
+    { "id": "occluded", "type": "neutral", "label": "Occluded (Lost)", "sublabel": "unseen <= 15s", "tag": "timer continues" },
+    { "id": "displaced", "type": "neutral", "label": "Moved by Person", "sublabel": "IoU < 0.3 + person", "tag": "reset to 0s" }
+  ],
+  "transitions": [
+    { "id": "t-detected-tracking", "from": "detected", "to": "tracking", "label": "track_id" },
+    { "id": "t-tracking-warn", "from": "tracking", "to": "unexpected_warn", "label": ">= 5s" },
+    { "id": "t-warn-dwell", "from": "unexpected_warn", "to": "dwell_alert", "label": ">= 30s", "variant": "security" },
+    { "id": "t-dwell-resolved", "from": "dwell_alert", "to": "resolved", "label": "gone > 15s", "variant": "emphasis" },
+    { "id": "t-tracking-owner", "from": "tracking", "to": "owner_reset", "label": "owner near" },
+    { "id": "t-owner-tracking", "from": "owner_reset", "to": "tracking", "label": "reset 0s" },
+    { "id": "t-tracking-occluded", "from": "tracking", "to": "occluded", "label": "hidden" },
+    { "id": "t-occluded-tracking", "from": "occluded", "to": "tracking", "label": "re-seen <=15s" },
+    { "id": "t-occluded-resolved", "from": "occluded", "to": "resolved", "label": "lost > 15s" },
+    { "id": "t-tracking-displaced", "from": "tracking", "to": "displaced", "label": "moved near" },
+    { "id": "t-displaced-tracking", "from": "displaced", "to": "tracking", "label": "re-anchor" },
+    { "id": "t-dwell-owner", "from": "dwell_alert", "to": "owner_reset", "label": "owner returns", "variant": "dashed" }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Hysteresis & Owner Binding",
+      "items": [
+        "New watch-object track requires confidence >= 0.40 (conf_enter) and assigns a unique track_id",
+        "Existing tracks stay alive down to confidence >= 0.30 (conf_stay) to prevent flicker",
+        "Nearest visible person within 0.20 normalized radius at first_seen is bound as owner_id"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "Dwell Reset to 0s (Anti-Evasion)",
+      "items": [
+        "Returning owner_id within 0.20 radius or a stationary person present >= 2.0s RESETS unattended clock to 0s",
+        "Brief 1s passersby walking past the bag do NOT reset the unattended dwell timer",
+        "Displacement (IoU < 0.3 vs 5s anchor) resets the dwell clock ONLY if a person is within 0.20 radius"
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "Occlusion Retention & Per-Track Escalation",
+      "items": [
+        "Occluded bags remain active in memory for up to 15s (track_timeout) and continue evaluating R2/R3",
+        "R2 fires WARNING at 5s lifetime; R3 fires CRITICAL at 30s unattended dwell",
+        "Cooldown (10s) is keyed by (rule, track_id) so concurrent bags never suppress each other"
+      ]
+    }
+  ]
+}

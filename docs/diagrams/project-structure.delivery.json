@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 1,
+  "receiptId": "942c3561-1321-4d1b-a258-2c7550badfec",
+  "status": "current",
+  "command": "deliver",
+  "type": "tree",
+  "input": "C:\\Users\\Ganesh\\Desktop\\AIIot project\\.archify\\tree-candidate.json",
+  "output": "C:\\Users\\Ganesh\\Desktop\\AIIot project\\docs\\diagrams\\project-structure.html",
+  "specification": {
+    "sha256": "7ead6a9149a103d594fdca88b4534f0402155845633d966f8e28734a4057e411",
+    "bytes": 4373
+  },
+  "artifact": {
+    "sha256": "d94654b1b03cc1caec0f72ebbfd13e9c505839fc53265e57eeff59c819fb9d64",
+    "bytes": 871091
+  }
+}

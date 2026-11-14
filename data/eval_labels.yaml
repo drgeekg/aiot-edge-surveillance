@@ -1,0 +1,12 @@
+clips:
+- path: data/demo.mp4
+  mode: public
+  expected_rules:
+  - unexpected_object
+  - object_dwell
+- path: data/demo_attended.mp4
+  mode: public
+  expected_rules:
+  - unexpected_object
+  forbidden_rules:
+  - object_dwell

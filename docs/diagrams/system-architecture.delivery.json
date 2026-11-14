@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 1,
+  "receiptId": "8714eac0-92c3-40b6-9c99-e05bf7040018",
+  "status": "current",
+  "command": "deliver",
+  "type": "architecture",
+  "input": "C:\\Users\\Ganesh\\Desktop\\AIIot project\\.archify\\architecture-candidate.json",
+  "output": "C:\\Users\\Ganesh\\Desktop\\AIIot project\\docs\\diagrams\\system-architecture.html",
+  "specification": {
+    "sha256": "efcaaeb6fd26581a2e5d03a2a1300987c80d0796ae59e94eea6a528a8e6721cb",
+    "bytes": 4751
+  },
+  "artifact": {
+    "sha256": "58a5c3309a72853363eca38de85802d91d37b63cc70b9361187fe1525288cb9b",
+    "bytes": 854027
+  }
+}

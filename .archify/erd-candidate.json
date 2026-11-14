@@ -1,0 +1,95 @@
+{
+  "schema_version": 1,
+  "diagram_type": "erd",
+  "meta": {
+    "title": "Edge Anomaly Detection SQLite Database Schema (events.db)",
+    "output": "docs/diagrams/database-schema.html",
+    "quality_profile": "showcase"
+  },
+  "layout": {
+    "mode": "grid",
+    "gapX": 72,
+    "gapY": 38
+  },
+  "entities": [
+    {
+      "id": "events",
+      "label": "events",
+      "sublabel": "idx_events_ts (ts)",
+      "tag": "detection_log",
+      "row": 0,
+      "col": 0,
+      "attributes": [
+        { "name": "id", "type": "INTEGER", "key": "pk" },
+        { "name": "ts", "type": "REAL NOT NULL" },
+        { "name": "device_id", "type": "TEXT NOT NULL" },
+        { "name": "source", "type": "TEXT NOT NULL" },
+        { "name": "object_class", "type": "TEXT NOT NULL" },
+        { "name": "count", "type": "INTEGER NOT NULL" },
+        { "name": "avg_conf", "type": "REAL NOT NULL" }
+      ]
+    },
+    {
+      "id": "anomalies",
+      "label": "anomalies",
+      "sublabel": "idx_anomalies_ts (ts)",
+      "tag": "alert_audit",
+      "row": 0,
+      "col": 1,
+      "attributes": [
+        { "name": "id", "type": "INTEGER", "key": "pk" },
+        { "name": "ts", "type": "REAL NOT NULL" },
+        { "name": "device_id", "type": "TEXT NOT NULL" },
+        { "name": "rule", "type": "TEXT NOT NULL" },
+        { "name": "detail", "type": "TEXT NOT NULL" },
+        { "name": "severity", "type": "TEXT NOT NULL" }
+      ]
+    },
+    {
+      "id": "frame_metrics",
+      "label": "frame_metrics",
+      "sublabel": "idx_metrics_ts (ts)",
+      "tag": "telemetry_log",
+      "row": 0,
+      "col": 2,
+      "attributes": [
+        { "name": "id", "type": "INTEGER", "key": "pk" },
+        { "name": "ts", "type": "REAL NOT NULL" },
+        { "name": "device_id", "type": "TEXT NOT NULL" },
+        { "name": "frame_bytes", "type": "INTEGER NOT NULL" },
+        { "name": "inference_ms", "type": "REAL NOT NULL" },
+        { "name": "e2e_ms", "type": "REAL NOT NULL" }
+      ]
+    }
+  ],
+  "relationships": [],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Physical SQLite WAL Schema (server/db.py)",
+      "items": [
+        "Exactly 3 physical tables in events.db: events, anomalies, and frame_metrics (no foreign keys)",
+        "Device registry (pipeline.devices) is maintained in-memory as DeviceState dataclasses, not a SQL table",
+        "Configured with PRAGMA journal_mode=WAL and PRAGMA busy_timeout=5000 per thread-local connection"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "Write Paths & Concurrency",
+      "items": [
+        "events and anomalies are inserted inside pipeline.ingest_detections() under pipeline.ingest_lock",
+        "frame_metrics is inserted by server/worker.py after frame annotation outside ingest_lock",
+        "Timestamp B-tree indexes (idx_events_ts, idx_anomalies_ts, idx_metrics_ts) accelerate rolling window queries"
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "Rolling Aggregations in db.stats()",
+      "items": [
+        "Computes processed FPS over the last 10s of frame_metrics (COUNT(*) / 10.0)",
+        "Computes average JPEG KB, inference_ms, and e2e_ms over the last 60s of frame_metrics",
+        "Groups total anomaly counts by rule (occupancy_spike, unexpected_object, object_dwell)"
+      ]
+    }
+  ]
+}

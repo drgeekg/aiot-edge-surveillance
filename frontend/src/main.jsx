@@ -15,8 +15,8 @@ const isEdgeApp =
   import.meta.env.VITE_APP_ROLE === 'edge';
 
 document.title = isEdgeApp
-  ? 'RoastGlass · Edge Emitter Deck (:5174)'
-  : 'RoastGlass · Server Analytics Console (:5173)';
+  ? 'Edge Control Deck (:5174)'
+  : 'Analytics Console (:5173)';
 
 createRoot(document.getElementById('root')).render(
   <React.StrictMode>

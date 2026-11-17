@@ -1,0 +1,124 @@
+<!DOCTYPE html><html><head><meta charset="utf-8"><style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  background: #ffffff;
+  font-family: 'Times New Roman', Georgia, serif;
+  color: #111111;
+  padding: 16px;
+  -webkit-font-smoothing: antialiased;
+}
+.frame {
+  width: 1120px;
+  border: 1.2px solid #222222;
+  background: #ffffff;
+  padding: 22px 26px;
+}
+.caption-top {
+  font-size: 13px;
+  color: #444444;
+  margin-bottom: 14px;
+  display: flex;
+  justify-content: space-between;
+  border-bottom: 1px solid #d4d4d4;
+  padding-bottom: 6px;
+}
+code {
+  font-family: 'Consolas', 'Courier New', monospace;
+  font-size: 0.92em;
+}
+
+</style></head><body><div class="frame">
+  <div class="caption-top">
+    <span>Timing, zone and severity progression of the 12 live Telegram alerts (10:44:21 to 10:44:39)</span>
+    <span>Blue circle = Warning (7) &middot; Red square = Critical after S5 escalation or interior rule (5)</span>
+  </div>
+  <svg width="1065" height="285" viewBox="0 0 1065 285">
+    <!-- Axes -->
+    <line x1="170" y1="20" x2="170" y2="230" stroke="#222" stroke-width="1.3"/>
+    <line x1="170" y1="230" x2="1030" y2="230" stroke="#222" stroke-width="1.3"/>
+
+    <!-- Horizontal Swimlanes by Rule Family -->
+    <line x1="170" y1="55" x2="1030" y2="55" stroke="#ddd" stroke-dasharray="3,3"/>
+    <line x1="170" y1="98" x2="1030" y2="98" stroke="#ddd" stroke-dasharray="3,3"/>
+    <line x1="170" y1="141" x2="1030" y2="141" stroke="#ddd" stroke-dasharray="3,3"/>
+    <line x1="170" y1="184" x2="1030" y2="184" stroke="#ddd" stroke-dasharray="3,3"/>
+
+    <text x="160" y="59" text-anchor="end" font-size="12.5" font-weight="bold">Person In Zone (H1)</text>
+    <text x="160" y="102" text-anchor="end" font-size="12.5" font-weight="bold">Repeat Visit Casing (H15)</text>
+    <text x="160" y="145" text-anchor="end" font-size="12.5" font-weight="bold">Fence Approach (H14)</text>
+    <text x="160" y="188" text-anchor="end" font-size="12.5" font-weight="bold">Night Person (H2) / Tamper</text>
+
+    <!-- X-axis ticks: t=0 is 10:44:20, scale = 40px per second (t=0..20 -> x=190..990) -->
+    <line x1="190" y1="230" x2="190" y2="236" stroke="#222"/>
+    <text x="190" y="250" text-anchor="middle" font-size="11.5">10:44:20 (+0s)</text>
+
+    <line x1="390" y1="20" x2="390" y2="230" stroke="#eee"/>
+    <line x1="390" y1="230" x2="390" y2="236" stroke="#222"/>
+    <text x="390" y="250" text-anchor="middle" font-size="11.5">10:44:25 (+5s)</text>
+
+    <line x1="590" y1="20" x2="590" y2="230" stroke="#eee"/>
+    <line x1="590" y1="230" x2="590" y2="236" stroke="#222"/>
+    <text x="590" y="250" text-anchor="middle" font-size="11.5">10:44:30 (+10s)</text>
+
+    <line x1="790" y1="20" x2="790" y2="230" stroke="#eee"/>
+    <line x1="790" y1="230" x2="790" y2="236" stroke="#222"/>
+    <text x="790" y="250" text-anchor="middle" font-size="11.5">10:44:35 (+15s)</text>
+
+    <line x1="990" y1="20" x2="990" y2="230" stroke="#eee"/>
+    <line x1="990" y1="230" x2="990" y2="236" stroke="#222"/>
+    <text x="990" y="250" text-anchor="middle" font-size="11.5">10:44:40 (+20s)</text>
+
+    <text x="600" y="274" text-anchor="middle" font-size="12.5" font-weight="bold"> Live Run Timeline (Seconds Elapsed Since 10:44:20)</text>
+
+    <!-- Callout line 1: Fail-open at t=+3s (x=310) -->
+    <line x1="310" y1="30" x2="310" y2="230" stroke="#666" stroke-width="1" stroke-dasharray="4,4"/>
+    <text x="316" y="42" font-size="11.5" font-weight="bold" fill="#333">10:44:23 fail-open recovery</text>
+    <text x="316" y="56" font-size="10.5" fill="#555">(OpenAITimeoutError &rarr; still alerts)</text>
+
+    <!-- Callout line 2: S5 Escalation onset at t=+13s (x=710) -->
+    <line x1="710" y1="20" x2="710" y2="230" stroke="#be123c" stroke-width="1" stroke-dasharray="4,4"/>
+    <text x="702" y="30" text-anchor="end" font-size="11.5" font-weight="bold" fill="#be123c">S5 Repeat Escalation Onset (10:44:33)</text>
+
+    <!-- Data points -->
+    <!-- #1: t=1s (x=230), Tamper Moved (Warning) -->
+    <circle cx="230" cy="184" r="6" fill="#2563eb"/>
+    <text x="230" y="204" text-anchor="middle" font-size="10.5">#1 Tamper (0.98)</text>
+
+    <!-- #2: t=3s (x=310), Night Person (Warning, fail-open) -->
+    <circle cx="310" cy="184" r="6" fill="#2563eb"/>
+    <text x="310" y="172" text-anchor="middle" font-size="10.5">#2 Night (fail-open)</text>
+
+    <!-- #3: t=11s (x=630), Fence (Warning) -->
+    <circle cx="630" cy="141" r="6" fill="#2563eb"/>
+    <text x="615" y="131" text-anchor="end" font-size="10.5">#3 fence_line</text>
+
+    <!-- #4 & #5: t=12s (x=670), Casing fence_line & window (Warning) -->
+    <circle cx="665" cy="98" r="6" fill="#2563eb"/>
+    <circle cx="678" cy="98" r="6" fill="#2563eb"/>
+    <text x="665" y="85" text-anchor="middle" font-size="10.5">#4–#5 Casing (fence, window)</text>
+
+    <!-- #6: t=13s (x=710), Night Person (Critical) -->
+    <rect x="704" y="178" width="12" height="12" fill="#be123c"/>
+    <text x="710" y="204" text-anchor="middle" font-size="10.5" font-weight="bold" fill="#be123c">#6 Night (Critical)</text>
+
+    <!-- #7: t=13s (x=710), Fence (Warning) -->
+    <circle cx="710" cy="141" r="6" fill="#2563eb"/>
+
+    <!-- #8 & #10: t=14s (x=750), Person In Zone window (Critical + Warning) -->
+    <rect x="742" y="49" width="12" height="12" fill="#be123c"/>
+    <circle cx="758" cy="55" r="6" fill="#2563eb"/>
+    <text x="768" y="59" text-anchor="start" font-size="10.5">#8 (Crit) &amp; #10 (Warn) window</text>
+
+    <!-- #9: t=14s (x=750), Fence (Critical escalated) -->
+    <rect x="744" y="135" width="12" height="12" fill="#be123c"/>
+    <text x="764" y="145" font-size="10.5" font-weight="bold" fill="#be123c">#9 Fence (3rd &rarr; Crit)</text>
+
+    <!-- #11: t=17s (x=870), Casing yard (Critical) -->
+    <rect x="864" y="92" width="12" height="12" fill="#be123c"/>
+    <text x="870" y="84" text-anchor="middle" font-size="10.5" font-weight="bold" fill="#be123c">#11 yard (Crit)</text>
+
+    <!-- #12: t=19s (x=950), Person In Zone door (Critical) -->
+    <rect x="944" y="49" width="12" height="12" fill="#be123c"/>
+    <text x="950" y="42" text-anchor="middle" font-size="10.5" font-weight="bold" fill="#be123c">#12 door (Crit)</text>
+  </svg>
+</div></body></html>

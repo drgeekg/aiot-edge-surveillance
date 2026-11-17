@@ -121,9 +121,29 @@ class AnomalyEvent(BaseModel):
     severity: Literal["info", "warning", "critical"]
 
 
+def install_proactor_silence_handler() -> None:
+    """Suppress harmless Windows Proactor WinError 10054 when browsers close polled sockets."""
+    import asyncio
+
+    loop = asyncio.get_running_loop()
+    orig = loop.get_exception_handler()
+
+    def _handler(lp, ctx):
+        exc = ctx.get("exception")
+        if isinstance(exc, ConnectionResetError) and getattr(exc, "winerror", None) == 10054:
+            return
+        if orig:
+            orig(lp, ctx)
+        else:
+            lp.default_exception_handler(ctx)
+
+    loop.set_exception_handler(_handler)
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Manage SQLite initialization, CV worker startup, optional embedded edge, and shutdown."""
+    install_proactor_silence_handler()
     db.init_db()
     try:
         from server import worker

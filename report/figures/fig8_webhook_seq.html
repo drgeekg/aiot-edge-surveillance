@@ -1,0 +1,100 @@
+<!DOCTYPE html><html><head><meta charset="utf-8"><style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  background: #ffffff;
+  font-family: 'Times New Roman', Georgia, serif;
+  color: #111111;
+  padding: 16px;
+  -webkit-font-smoothing: antialiased;
+}
+.frame {
+  width: 1120px;
+  border: 1.2px solid #222222;
+  background: #ffffff;
+  padding: 22px 26px;
+}
+.caption-top {
+  font-size: 13px;
+  color: #444444;
+  margin-bottom: 14px;
+  display: flex;
+  justify-content: space-between;
+  border-bottom: 1px solid #d4d4d4;
+  padding-bottom: 6px;
+}
+code {
+  font-family: 'Consolas', 'Courier New', monospace;
+  font-size: 0.92em;
+}
+
+.two-col { display: grid; grid-template-columns: 1.15fr 0.85fr; gap: 22px; align-items: center; }
+.card-preview {
+  border: 1.2px solid #333;
+  background: #f8f8f6;
+  padding: 14px 16px;
+  font-family: 'Consolas', monospace;
+  font-size: 12px;
+  line-height: 1.55;
+}
+</style></head><body><div class="frame">
+  <div class="caption-top">
+    <span>Signed webhook delivery path (<code>server/alerts.py</code> &rarr; Hermes Gateway <code>:8644</code> &rarr; Telegram Bot API)</span>
+    <span>Direct delivery mode (<code>deliver_only: true</code>)</span>
+  </div>
+  <div class="two-col">
+    <svg width="580" height="220" viewBox="0 0 580 220">
+      <!-- Actor boxes -->
+      <rect x="10" y="10" width="120" height="32" fill="#e8f0fe" stroke="#2563eb" stroke-width="1.5" rx="3"/>
+      <text x="70" y="30" text-anchor="middle" font-size="12" font-weight="bold">notify_node</text>
+
+      <rect x="160" y="10" width="125" height="32" fill="#fff" stroke="#444" stroke-width="1.2" rx="3"/>
+      <text x="222" y="30" text-anchor="middle" font-size="12" font-weight="bold">alerts.fire()</text>
+
+      <rect x="315" y="10" width="125" height="32" fill="#fff" stroke="#444" stroke-width="1.2" rx="3"/>
+      <text x="377" y="30" text-anchor="middle" font-size="12" font-weight="bold">Hermes (:8644)</text>
+
+      <rect x="465" y="10" width="105" height="32" fill="#f4f4f0" stroke="#444" stroke-width="1.2" rx="3"/>
+      <text x="517" y="30" text-anchor="middle" font-size="12" font-weight="bold">Telegram API</text>
+
+      <!-- Lifelines -->
+      <line x1="70" y1="42" x2="70" y2="205" stroke="#888" stroke-dasharray="4,4"/>
+      <line x1="222" y1="42" x2="222" y2="205" stroke="#888" stroke-dasharray="4,4"/>
+      <line x1="377" y1="42" x2="377" y2="205" stroke="#888" stroke-dasharray="4,4"/>
+      <line x1="517" y1="42" x2="517" y2="205" stroke="#888" stroke-dasharray="4,4"/>
+
+      <!-- Step 1 -->
+      <line x1="70" y1="68" x2="218" y2="68" stroke="#222" stroke-width="1.3"/>
+      <polygon points="222,68 214,64 214,72" fill="#222"/>
+      <text x="146" y="61" text-anchor="middle" font-size="11">1. Confirmed Anomaly + reason</text>
+
+      <!-- Step 2 -->
+      <line x1="222" y1="104" x2="373" y2="104" stroke="#2563eb" stroke-width="1.5"/>
+      <polygon points="377,104 369,100 369,108" fill="#2563eb"/>
+      <text x="300" y="96" text-anchor="middle" font-size="11" font-weight="bold" fill="#1e40af">2. POST /webhooks/house-alert</text>
+      <text x="300" y="118" text-anchor="middle" font-size="10" fill="#444">Header: X-Hub-Signature-256 (HMAC-SHA256)</text>
+
+      <!-- Step 3 -->
+      <line x1="377" y1="152" x2="513" y2="152" stroke="#222" stroke-width="1.3"/>
+      <polygon points="517,152 509,148 509,156" fill="#222"/>
+      <text x="447" y="144" text-anchor="middle" font-size="11">3. Verify HMAC &amp; deliver card</text>
+
+      <!-- Step 4 -->
+      <line x1="377" y1="188" x2="226" y2="188" stroke="#555" stroke-width="1.1" stroke-dasharray="4,3"/>
+      <polygon points="222,188 230,184 230,192" fill="#555"/>
+      <text x="300" y="181" text-anchor="middle" font-size="10.5" fill="#444">4. HTTP 200 OK (5.0s non-blocking timeout)</text>
+    </svg>
+
+    <div class="card-preview">
+      <div style="font-family:'Times New Roman',serif; font-weight:bold; font-size:13px; margin-bottom:6px; border-bottom:1px solid #bbb; padding-bottom:4px;">
+        Formatted Card Delivered to Phone
+      </div>
+      <div><b>CRITICAL &middot; Fence Or Wall Approach</b></div>
+      <div style="color:#666;">----------------------</div>
+      <div>Camera : edge-01</div>
+      <div>Mode &nbsp; : HOME | Zone: fence_line</div>
+      <div>Time &nbsp; : 10:44:34</div>
+      <div>Event &nbsp;: Person approaching perimeter zone 'fence_line' (2.1s)</div>
+      <div>Agent &nbsp;: Person approaching perimeter fence line while armed at night</div>
+    </div>
+  </div>
+</div></body></html>

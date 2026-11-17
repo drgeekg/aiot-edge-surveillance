@@ -1,0 +1,162 @@
+<!DOCTYPE html><html><head><meta charset="utf-8"><style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  background: #ffffff;
+  font-family: 'Times New Roman', Georgia, serif;
+  color: #111111;
+  padding: 16px;
+  -webkit-font-smoothing: antialiased;
+}
+.frame {
+  width: 1120px;
+  border: 1.2px solid #222222;
+  background: #ffffff;
+  padding: 22px 26px;
+}
+.caption-top {
+  font-size: 13px;
+  color: #444444;
+  margin-bottom: 14px;
+  display: flex;
+  justify-content: space-between;
+  border-bottom: 1px solid #d4d4d4;
+  padding-bottom: 6px;
+}
+code {
+  font-family: 'Consolas', 'Courier New', monospace;
+  font-size: 0.92em;
+}
+
+.lane {
+  display: grid;
+  grid-template-columns: 195px 1fr;
+  align-items: center;
+  padding: 16px 0;
+  border-bottom: 1px dashed #999999;
+}
+.lane:last-child { border-bottom: none; padding-bottom: 4px; }
+.lane-title { font-size: 16px; font-weight: bold; color: #111; margin-bottom: 3px; }
+.lane-sub { font-size: 12.5px; color: #444; line-height: 1.35; }
+.flow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+.node {
+  flex: 1;
+  border: 1px solid #555555;
+  border-radius: 5px;
+  background: #ffffff;
+  padding: 11px 12px;
+  text-align: center;
+  min-height: 68px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+.node.ai {
+  border: 1.8px solid #2563eb;
+  background: #e8f0fe;
+}
+.node.muted {
+  background: #f5f5f2;
+  border-style: dashed;
+}
+.node-title { font-size: 14.5px; font-weight: bold; margin-bottom: 3px; }
+.node-sub { font-size: 12px; color: #333; line-height: 1.3; }
+.arrow {
+  font-size: 12px;
+  color: #333;
+  text-align: center;
+  min-width: 72px;
+}
+.arrow-line {
+  border-top: 1.4px solid #333;
+  position: relative;
+  margin: 4px 0;
+}
+.arrow-line::after {
+  content: '';
+  position: absolute;
+  right: -1px;
+  top: -4.5px;
+  border-top: 4px solid transparent;
+  border-bottom: 4px solid transparent;
+  border-left: 7px solid #333;
+}
+</style></head><body><div class="frame">
+  <div class="caption-top">
+    <span>Blue box = where computer vision or language-model reasoning runs</span>
+    <span>Two-process HTTP split (<code>:8001</code> &rarr; <code>:8000</code>)</span>
+  </div>
+
+  <div class="lane">
+    <div>
+      <div class="lane-title">1. IoT Edge Tier</div>
+      <div class="lane-sub">Simulated camera server<br>Port <code>:8001</code> &amp; UI <code>:5174</code></div>
+    </div>
+    <div class="flow">
+      <div class="node muted">
+        <div class="node-title">Video Sources</div>
+        <div class="node-sub">11 MP4 clips, webcam,<br>RTSP / YouTube</div>
+      </div>
+      <div class="arrow"><div>OpenCV read</div><div class="arrow-line"></div><div>5 FPS loop</div></div>
+      <div class="node">
+        <div class="node-title">Simulated Edge Node</div>
+        <div class="node-sub"><code>edge.edge_server</code> (<code>:8001</code>)<br>Resize 960px, JPEG q=90</div>
+      </div>
+      <div class="arrow"><div>HTTP POST</div><div class="arrow-line"></div><div><code>/frames</code></div></div>
+      <div class="node">
+        <div class="node-title">Edge Control Deck</div>
+        <div class="node-sub">React console (<code>:5174</code>)<br>Source, encoder &amp; mode</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="lane">
+    <div>
+      <div class="lane-title">2. Analysis Server</div>
+      <div class="lane-sub">Local vision &amp; storage<br>Port <code>:8000</code> &amp; UI <code>:5173</code></div>
+    </div>
+    <div class="flow">
+      <div class="node">
+        <div class="node-title">Bounded Ingest Queue</div>
+        <div class="node-sub"><code>server.app</code> (<code>:8000</code>)<br>8 slots, drop-oldest</div>
+      </div>
+      <div class="arrow"><div>cv-worker</div><div class="arrow-line"></div><div>640&times;640</div></div>
+      <div class="node ai">
+        <div class="node-title">YOLO26n ONNX + Tracker</div>
+        <div class="node-sub">Local CPU inference (27.6 ms)<br>Hysteresis 0.40/0.30, IoU track</div>
+      </div>
+      <div class="arrow"><div>Tracks</div><div class="arrow-line"></div><div>Polygons</div></div>
+      <div class="node ai">
+        <div class="node-title">Dual-Mode Rule Engine</div>
+        <div class="node-sub">Home (H1–H18) &amp; Public (P1–P21)<br>+ SQLite WAL &amp; Console <code>:5173</code></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="lane">
+    <div>
+      <div class="lane-title">3. Triage &amp; Alerting</div>
+      <div class="lane-sub">Text-only cloud LLM<br>&amp; Hermes gateway <code>:8644</code></div>
+    </div>
+    <div class="flow">
+      <div class="node ai">
+        <div class="node-title">LangGraph Triage Agent</div>
+        <div class="node-sub">NVIDIA Nemotron-3-Ultra<br>Text metadata only; fail-open</div>
+      </div>
+      <div class="arrow"><div>Confirmed</div><div class="arrow-line"></div><div>HMAC-SHA256</div></div>
+      <div class="node">
+        <div class="node-title">Hermes Gateway</div>
+        <div class="node-sub">Webhook listener (<code>:8644</code>)<br><code>deliver_only: true</code></div>
+      </div>
+      <div class="arrow"><div>Bot API</div><div class="arrow-line"></div><div>HTTPS</div></div>
+      <div class="node muted">
+        <div class="node-title">Telegram Phone Alert</div>
+        <div class="node-sub">Structured alert card with<br>zone, time &amp; agent reason</div>
+      </div>
+    </div>
+  </div>
+</div></body></html>

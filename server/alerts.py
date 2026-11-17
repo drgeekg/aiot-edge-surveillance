@@ -65,9 +65,23 @@ def send_hermes_webhook(
     rule = getattr(anomaly, "rule", "anomaly")
     detail = getattr(anomaly, "detail", "")
     mode = getattr(anomaly, "mode", "public")
-    dev_str = f"[{device_id}]" if device_id else ""
-    reason_str = f" — Agent: {reason}" if reason else ""
-    msg = f"🚨 [{sev}][{mode}]{dev_str} {rule}: {detail}{reason_str}"
+    zone = getattr(anomaly, "zone", "") or "global"
+    ts_val = float(getattr(anomaly, "ts", time.time()))
+    time_str = time.strftime("%H:%M:%S", time.localtime(ts_val if ts_val > 1e8 else time.time()))
+    sev_icon = {"CRITICAL": "🔴", "WARNING": "🟠", "INFO": "🔵"}.get(sev, "🔔")
+    rule_title = rule.replace("_", " ").title()
+
+    lines = [
+        f"{sev_icon} {sev} · {rule_title}",
+        "━━━━━━━━━━━━━━━━━━━━",
+        f"📷 Camera : {device_id or 'edge-01'}",
+        f"🛡️ Mode   : {mode.upper()} | Zone: {zone}",
+        f"🕒 Time   : {time_str}",
+        f"📌 Event  : {detail}",
+    ]
+    if reason:
+        lines.append(f"🤖 Agent  : {reason}")
+    msg = "\n".join(lines)
 
     payload_dict = {
         "event_type": rule,

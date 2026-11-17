@@ -1,0 +1,107 @@
+<!DOCTYPE html><html><head><meta charset="utf-8"><style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  background: #ffffff;
+  font-family: 'Times New Roman', Georgia, serif;
+  color: #111111;
+  padding: 16px;
+  -webkit-font-smoothing: antialiased;
+}
+.frame {
+  width: 1120px;
+  border: 1.2px solid #222222;
+  background: #ffffff;
+  padding: 22px 26px;
+}
+.caption-top {
+  font-size: 13px;
+  color: #444444;
+  margin-bottom: 14px;
+  display: flex;
+  justify-content: space-between;
+  border-bottom: 1px solid #d4d4d4;
+  padding-bottom: 6px;
+}
+code {
+  font-family: 'Consolas', 'Courier New', monospace;
+  font-size: 0.92em;
+}
+
+.stages {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 12px;
+  margin-bottom: 14px;
+}
+.stage-card {
+  border: 1px solid #666666;
+  border-radius: 5px;
+  padding: 14px 13px;
+  background: #ffffff;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  min-height: 175px;
+}
+.stage-card.ai {
+  border: 1.8px solid #2563eb;
+  background: #e8f0fe;
+}
+.st-head { font-size: 15px; font-weight: bold; margin-bottom: 6px; }
+.st-body { font-size: 12.5px; color: #222; line-height: 1.42; margin-bottom: 12px; }
+.st-meta { font-size: 11px; color: #555; border-top: 1px solid #ccc; padding-top: 6px; }
+.st-meta b { display: block; color: #111; font-size: 12px; }
+.footer-bar {
+  border: 1px solid #666666;
+  border-radius: 5px;
+  background: #f4f4f0;
+  padding: 10px 16px;
+  text-align: center;
+  font-size: 13.5px;
+}
+</style></head><body><div class="frame">
+  <div class="caption-top">
+    <span>End-to-end life of one video frame from edge capture to mobile notification</span>
+    <span>Stages 1–2 on Edge (<code>:8001</code>) &middot; Stages 3–5 on Server (<code>:8000</code>)</span>
+  </div>
+  <div class="stages">
+    <div class="stage-card">
+      <div>
+        <div class="st-head">Stage 1: Capture &amp; Encode</div>
+        <div class="st-body"><code>VideoSource</code> reads frame, resizes to 960 px width, encodes JPEG at quality 90 (~96.2 KB).</div>
+      </div>
+      <div class="st-meta">Process<b>Edge Node (<code>:8001</code>)</b></div>
+    </div>
+    <div class="stage-card">
+      <div>
+        <div class="st-head">Stage 2: Ingest &amp; Queue</div>
+        <div class="st-body"><code>POST /frames</code> validates headers &amp; magic bytes; pushes to 8-slot drop-oldest queue.</div>
+      </div>
+      <div class="st-meta">Process<b>FastAPI Ingest (<code>:8000</code>)</b></div>
+    </div>
+    <div class="stage-card ai">
+      <div>
+        <div class="st-head">Stage 3: Detect &amp; Track</div>
+        <div class="st-body">Letterbox 640&times;640, run NMS-free <code>YOLO26n</code> ONNX, match IoU + centroid tracks.</div>
+      </div>
+      <div class="st-meta">Vision Stage<b>ONNX Runtime + Tracker</b></div>
+    </div>
+    <div class="stage-card ai">
+      <div>
+        <div class="st-head">Stage 4: Rules &amp; Triage</div>
+        <div class="st-body">Evaluate Home/Public rules &amp; S5 escalation; async LangGraph LLM triage on text metadata.</div>
+      </div>
+      <div class="st-meta">Decision Stage<b>RuleEngine + LangGraph</b></div>
+    </div>
+    <div class="stage-card">
+      <div>
+        <div class="st-head">Stage 5: Store &amp; Deliver</div>
+        <div class="st-body">Write SQLite WAL record; sign <code>HMAC-SHA256</code> webhook to Hermes (<code>:8644</code>) &rarr; Telegram.</div>
+      </div>
+      <div class="st-meta">Output Stage<b>SQLite + Hermes + UI</b></div>
+    </div>
+  </div>
+  <div class="footer-bar">
+    <b>Privacy &amp; Safety Invariant:</b> Raw video frames never leave the local host; if the cloud LLM times out, Stage 4 fails open so the alert is still delivered.
+  </div>
+</div></body></html>

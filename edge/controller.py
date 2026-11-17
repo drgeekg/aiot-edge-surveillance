@@ -142,6 +142,10 @@ class EdgeEmitterController:
             "data/worker-zone.mp4": ("Zone Intrusion Demo (worker-zone.mp4)", "Home/Public Zones"),
             "data/store-aisle.mp4": ("Indoor Aisle / Queue (store-aisle.mp4)", "Queue & Dwell"),
             "data/car-detection.mp4": ("Vehicle / Driveway Monitoring (car-detection.mp4)", "Driveway / No-Park"),
+            "data/sec_cam_1.mp4": ("Security Cam 1 · 1080p Person & Car (sec_cam_1.mp4)", "Home Driveway · 48s"),
+            "data/sec_cam_2.mp4": ("Security Cam 2 · Continuous Indoor/Porch (sec_cam_2.mp4)", "Long Feed · 131s"),
+            "data/sec_cam_3.mp4": ("Security Cam 3 · Continuous Street/Driveway (sec_cam_3.mp4)", "Long Feed · 132s"),
+            "data/sec_cam_4.mp4": ("Security Cam 4 · Person Entry Clip (sec_cam_4.mp4)", "Entry · 15s"),
         }
         if os.path.exists("data"):
             for fn in sorted(os.listdir("data")):

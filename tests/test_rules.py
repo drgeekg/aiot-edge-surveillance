@@ -632,5 +632,18 @@ def test_hermes_webhook_signing(monkeypatch):
     assert sent["headers"]["X-Hub-Signature-256"].startswith("sha256=")
 
 
+def test_standalone_edge_server_routes():
+    """Verify standalone edge_server routes expose health and edge status."""
+    from edge import edge_server
+
+    h = edge_server.get_health()
+    assert h["role"] == "edge-node"
+    assert h["status"] == "ok"
+    st = edge_server.get_edge_status()
+    assert "available_sources" in st
+    assert "source" in st
+
+
+
 
 

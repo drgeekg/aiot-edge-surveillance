@@ -1,0 +1,127 @@
+<!DOCTYPE html><html><head><meta charset="utf-8"><style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  background: #ffffff;
+  font-family: 'Times New Roman', Georgia, serif;
+  color: #111111;
+  padding: 16px;
+  -webkit-font-smoothing: antialiased;
+}
+.frame {
+  width: 1120px;
+  border: 1.2px solid #222222;
+  background: #ffffff;
+  padding: 22px 26px;
+}
+.caption-top {
+  font-size: 13px;
+  color: #444444;
+  margin-bottom: 14px;
+  display: flex;
+  justify-content: space-between;
+  border-bottom: 1px solid #d4d4d4;
+  padding-bottom: 6px;
+}
+code {
+  font-family: 'Consolas', 'Courier New', monospace;
+  font-size: 0.92em;
+}
+
+.two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 22px; }
+.col-hdr { font-size: 14.5px; font-weight: bold; margin-bottom: 6px; display: flex; justify-content: space-between; }
+</style></head><body><div class="frame">
+  <div class="caption-top">
+    <span>Normalised camera-frame polygon zones and directional tripwires in <code>config.yaml</code></span>
+    <span>Coordinates in [0, 1] &times; [0, 1] evaluated on track foot-point <code>((x1+x2)/2, y2)</code></span>
+  </div>
+  <div class="two-col">
+    <div>
+      <div class="col-hdr"><span>A. Home Security Mode (Rules H1–H18)</span><span style="font-weight:normal;font-size:12px;color:#444;">4 Arming States</span></div>
+      <svg width="510" height="250" viewBox="0 0 510 250" style="border:1px solid #444; background:#fafafa;">
+        <!-- Grid lines -->
+        <line x1="0" y1="62" x2="510" y2="62" stroke="#e0e0e0" stroke-dasharray="3,3"/>
+        <line x1="0" y1="125" x2="510" y2="125" stroke="#e0e0e0" stroke-dasharray="3,3"/>
+        <line x1="0" y1="187" x2="510" y2="187" stroke="#e0e0e0" stroke-dasharray="3,3"/>
+        <line x1="127" y1="0" x2="127" y2="250" stroke="#e0e0e0" stroke-dasharray="3,3"/>
+        <line x1="255" y1="0" x2="255" y2="250" stroke="#e0e0e0" stroke-dasharray="3,3"/>
+        <line x1="382" y1="0" x2="382" y2="250" stroke="#e0e0e0" stroke-dasharray="3,3"/>
+
+        <!-- fence_line -->
+        <rect x="12" y="10" width="486" height="44" fill="#f4f4f0" stroke="#444" stroke-width="1.3"/>
+        <text x="255" y="29" text-anchor="middle" font-size="12" font-weight="bold">fence_line (Perimeter &middot; H14)</text>
+        <text x="255" y="44" text-anchor="middle" font-size="10.5" fill="#444">min 2s &middot; loiter 15s &middot; warning</text>
+
+        <!-- Tripwire -->
+        <line x1="16" y1="82" x2="176" y2="82" stroke="#2563eb" stroke-width="2" stroke-dasharray="5,3"/>
+        <text x="96" y="75" text-anchor="middle" font-size="10.5" font-weight="bold" fill="#2563eb">entry_line tripwire (H4)</text>
+
+        <!-- door -->
+        <rect x="18" y="92" width="155" height="145" fill="#e8f0fe" stroke="#2563eb" stroke-width="1.6"/>
+        <text x="95" y="152" text-anchor="middle" font-size="12" font-weight="bold">door (Entry &middot; H1/H6)</text>
+        <text x="95" y="168" text-anchor="middle" font-size="10.5" fill="#333">min 2s &middot; loiter 20s</text>
+        <text x="95" y="183" text-anchor="middle" font-size="10.5" fill="#333">parcel left/taken check</text>
+
+        <!-- yard -->
+        <rect x="186" y="120" width="110" height="117" fill="#f4f4f0" stroke="#555" stroke-width="1.3"/>
+        <text x="241" y="172" text-anchor="middle" font-size="12" font-weight="bold">yard (Exterior)</text>
+        <text x="241" y="187" text-anchor="middle" font-size="10.5" fill="#444">min 3s &middot; loiter 60s</text>
+
+        <!-- window -->
+        <rect x="308" y="66" width="190" height="88" fill="#e8f0fe" stroke="#2563eb" stroke-width="1.6"/>
+        <text x="403" y="106" text-anchor="middle" font-size="12" font-weight="bold">window (Interior &middot; H1)</text>
+        <text x="403" y="122" text-anchor="middle" font-size="10.5" fill="#333">min 2s &middot; critical in armed_night</text>
+
+        <!-- driveway -->
+        <rect x="308" y="164" width="112" height="73" fill="#f4f4f0" stroke="#555" stroke-width="1.3"/>
+        <text x="364" y="196" text-anchor="middle" font-size="11.5" font-weight="bold">driveway (H11)</text>
+        <text x="364" y="211" text-anchor="middle" font-size="10" fill="#444">vehicles &middot; log_only</text>
+
+        <!-- pool -->
+        <rect x="428" y="164" width="70" height="73" fill="#fde8e8" stroke="#be123c" stroke-width="1.5"/>
+        <text x="463" y="196" text-anchor="middle" font-size="11.5" font-weight="bold" fill="#991b1b">pool (H18)</text>
+        <text x="463" y="211" text-anchor="middle" font-size="10" fill="#991b1b">hazard &middot; 1s</text>
+      </svg>
+    </div>
+
+    <div>
+      <div class="col-hdr"><span>B. Public Space Mode (Rules P1–P21)</span><span style="font-weight:normal;font-size:12px;color:#444;">Crowd &amp; Baggage</span></div>
+      <svg width="510" height="250" viewBox="0 0 510 250" style="border:1px solid #444; background:#fafafa;">
+        <line x1="0" y1="62" x2="510" y2="62" stroke="#e0e0e0" stroke-dasharray="3,3"/>
+        <line x1="0" y1="125" x2="510" y2="125" stroke="#e0e0e0" stroke-dasharray="3,3"/>
+        <line x1="0" y1="187" x2="510" y2="187" stroke="#e0e0e0" stroke-dasharray="3,3"/>
+        <line x1="127" y1="0" x2="127" y2="250" stroke="#e0e0e0" stroke-dasharray="3,3"/>
+        <line x1="255" y1="0" x2="255" y2="250" stroke="#e0e0e0" stroke-dasharray="3,3"/>
+        <line x1="382" y1="0" x2="382" y2="250" stroke="#e0e0e0" stroke-dasharray="3,3"/>
+
+        <!-- queue -->
+        <rect x="16" y="16" width="165" height="115" fill="#f4f4f0" stroke="#555" stroke-width="1.3"/>
+        <text x="98" y="68" text-anchor="middle" font-size="12" font-weight="bold">queue (P18)</text>
+        <text x="98" y="84" text-anchor="middle" font-size="10.5" fill="#444">max 5 persons &middot; wait 60s</text>
+
+        <!-- corridor tripwire -->
+        <line x1="195" y1="26" x2="335" y2="62" stroke="#2563eb" stroke-width="2" stroke-dasharray="5,3"/>
+        <text x="265" y="34" text-anchor="middle" font-size="10.5" font-weight="bold" fill="#2563eb">corridor tripwire &rarr; (P6/P19)</text>
+
+        <!-- no_wheels -->
+        <rect x="195" y="80" width="145" height="51" fill="#f4f4f0" stroke="#555" stroke-width="1.3"/>
+        <text x="267" y="103" text-anchor="middle" font-size="11.5" font-weight="bold">no_wheels (P15)</text>
+        <text x="267" y="118" text-anchor="middle" font-size="10" fill="#444">bicycle / motorcycle / skate</text>
+
+        <!-- restricted -->
+        <rect x="354" y="16" width="140" height="115" fill="#fde8e8" stroke="#be123c" stroke-width="1.5"/>
+        <text x="424" y="66" text-anchor="middle" font-size="12" font-weight="bold" fill="#991b1b">restricted (P5)</text>
+        <text x="424" y="82" text-anchor="middle" font-size="10.5" fill="#991b1b">min 2s &middot; always_alert</text>
+
+        <!-- pedestrian -->
+        <rect x="16" y="145" width="324" height="92" fill="#e8f0fe" stroke="#2563eb" stroke-width="1.6"/>
+        <text x="178" y="184" text-anchor="middle" font-size="12" font-weight="bold">pedestrian concourse (P7 Crowd &le;6 &middot; P13 No Vehicles)</text>
+        <text x="178" y="201" text-anchor="middle" font-size="10.5" fill="#333">P2/P3/P4 unattended bag dwell (&ge;30s) &amp; owner radius 0.20</text>
+
+        <!-- no_parking -->
+        <rect x="354" y="145" width="140" height="92" fill="#f4f4f0" stroke="#777" stroke-width="1.2" stroke-dasharray="4,3"/>
+        <text x="424" y="186" text-anchor="middle" font-size="11.5" font-weight="bold" fill="#444">no_parking (P14)</text>
+        <text x="424" y="202" text-anchor="middle" font-size="10" fill="#555">configured (300s limit)</text>
+      </svg>
+    </div>
+  </div>
+</div></body></html>

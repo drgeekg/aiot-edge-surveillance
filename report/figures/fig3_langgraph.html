@@ -1,0 +1,99 @@
+<!DOCTYPE html><html><head><meta charset="utf-8"><style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  background: #ffffff;
+  font-family: 'Times New Roman', Georgia, serif;
+  color: #111111;
+  padding: 16px;
+  -webkit-font-smoothing: antialiased;
+}
+.frame {
+  width: 1120px;
+  border: 1.2px solid #222222;
+  background: #ffffff;
+  padding: 22px 26px;
+}
+.caption-top {
+  font-size: 13px;
+  color: #444444;
+  margin-bottom: 14px;
+  display: flex;
+  justify-content: space-between;
+  border-bottom: 1px solid #d4d4d4;
+  padding-bottom: 6px;
+}
+code {
+  font-family: 'Consolas', 'Courier New', monospace;
+  font-size: 0.92em;
+}
+
+.grid-flow {
+  display: grid;
+  grid-template-columns: 230px 45px 250px 65px 250px;
+  align-items: center;
+  justify-content: center;
+  margin: 10px 0 16px 0;
+}
+.box {
+  border: 1.2px solid #444;
+  border-radius: 5px;
+  padding: 12px 14px;
+  background: #fff;
+  text-align: left;
+}
+.box.ai {
+  border: 1.8px solid #2563eb;
+  background: #e8f0fe;
+}
+.box.sup {
+  background: #f4f4f0;
+  border-style: dashed;
+}
+.b-title { font-size: 14.5px; font-weight: bold; margin-bottom: 4px; border-bottom: 1px solid rgba(0,0,0,0.12); padding-bottom: 3px; }
+.b-text { font-size: 12px; color: #222; line-height: 1.38; }
+.branch-col { display: flex; flex-direction: column; gap: 14px; }
+.rule-strip {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  border-top: 1px solid #ccc;
+  padding-top: 12px;
+  font-size: 12px;
+}
+.rule-item { background: #f8f8f6; border: 1px solid #bbb; padding: 8px 10px; border-radius: 4px; }
+</style></head><body><div class="frame">
+  <div class="caption-top">
+    <span>Four-node LangGraph triage workflow (<code>server/agent.py</code>)</span>
+    <span>Executed asynchronously in 2-worker background thread pool</span>
+  </div>
+  <div class="grid-flow">
+    <div class="box">
+      <div class="b-title">1. context_node</div>
+      <div class="b-text">Collects rule name, zone, mode, arming state, local clock, and last 5 SQLite event summaries.<br><b>Zero pixel data included.</b></div>
+    </div>
+    <div style="text-align:center; font-size:18px;">&rarr;</div>
+    <div class="box ai">
+      <div class="b-title">2. decide_node (LLM)</div>
+      <div class="b-text">Calls NVIDIA Cloud (<code>nemotron-3-ultra-550b</code>, 20s timeout). Parses JSON:<br><code>{"real": bool, "severity": str, "reason": str}</code></div>
+    </div>
+    <div style="text-align:center; font-size:12px; line-height:2.8;">
+      <div><code>real=true</code> &rarr;</div>
+      <div><code>real=false</code> &rarr;</div>
+    </div>
+    <div class="branch-col">
+      <div class="box ai">
+        <div class="b-title">3a. notify_node</div>
+        <div class="b-text">Persists anomaly + LLM reason to SQLite; triggers console border, beep &amp; signed Hermes webhook.</div>
+      </div>
+      <div class="box sup">
+        <div class="b-title">3b. suppress_node</div>
+        <div class="b-text">Logs anomaly in SQLite with <code>[SUPPRESSED]</code> prefix for auditability; skips phone push.</div>
+      </div>
+    </div>
+  </div>
+  <div class="rule-strip">
+    <div class="rule-item"><b>Policy: <code>always_alert</code></b><br>Rules S1, S2, H8, H9, H18, P5, P9, P11, P13 force <code>real = true</code>; LLM cannot suppress.</div>
+    <div class="rule-item"><b>Policy: <code>review</code></b><br>Standard Home/Public detections; LLM evaluates context and may route to <code>suppress_node</code>.</div>
+    <div class="rule-item"><b>Policy: <code>log_only</code> &amp; Fail-Open</b><br><code>log_only</code> rules (H4, H11, H17) bypass LLM; any LLM timeout routes to <code>notify_node</code>.</div>
+  </div>
+</div></body></html>

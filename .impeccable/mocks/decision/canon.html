@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Category Standard Light</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    width: 1440px; height: 900px; overflow: hidden;
+    background: #F8FAFC; color: #0F172A;
+    font-family: "Inter", system-ui, sans-serif; font-size: 14px;
+  }
+  .wrap { max-width: 1240px; margin: 0 auto; padding: 20px 28px; }
+  .top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px; }
+  .btn { background: #2563EB; color: #FFFFFF; padding: 8px 14px; border-radius: 6px; font-weight: 500; }
+  .kpis { display: grid; grid-template-columns: repeat(6, 1fr); gap: 12px; margin-bottom: 16px; }
+  .card { background: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 8px; padding: 14px; }
+  .k { font-size: 12px; color: #64748B; }
+  .v { font-size: 24px; font-weight: 600; margin-top: 4px; }
+  .grid { display: grid; grid-template-columns: 1.3fr 1fr; gap: 16px; }
+  .vid { height: 420px; background: #0F172A; border-radius: 6px; color: #CBD5E1; display: flex; align-items: center; justify-content: center; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="top">
+    <h1 style="font-size:22px;">Analytics Console</h1>
+    <div class="btn">Open Edge Deck</div>
+  </div>
+  <div class="kpis">
+    <div class="card"><div class="k">Total Events</div><div class="v">642</div></div>
+    <div class="card"><div class="k">R1 Occupancy</div><div class="v">18</div></div>
+    <div class="card"><div class="k">R2 Unexpected</div><div class="v">63</div></div>
+    <div class="card"><div class="k">R3 Dwell</div><div class="v">11</div></div>
+    <div class="card"><div class="k">FPS</div><div class="v">4.7</div></div>
+    <div class="card"><div class="k">Latency</div><div class="v">54ms</div></div>
+  </div>
+  <div class="grid">
+    <div class="card"><div style="font-weight:600;margin-bottom:10px;">Live Stream</div><div class="vid">Annotated Stream</div></div>
+    <div class="card"><div style="font-weight:600;margin-bottom:10px;">Recent Anomalies</div><div style="color:#64748B;">Standard white-card operations layout</div></div>
+  </div>
+</div>
+</body>
+</html>

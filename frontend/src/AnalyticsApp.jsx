@@ -1,425 +1,665 @@
-import React, { useEffect, useState } from 'react';
-import { AnimatedTabBar, CustomCursor, HeroHeader } from './components/GlassShell';
+import React, { useEffect, useMemo, useState } from 'react';
+import {
+  API_BASE,
+  ConsolePageHeader,
+  ConsoleTopBar,
+  MetricStrip,
+  TabBar,
+  buildHeaders,
+  formatClock,
+  formatDuration,
+} from './components/ConsoleShell';
 
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8000';
-const EDGE_FRONTEND_URL = import.meta.env.VITE_EDGE_UI_URL || 'http://localhost:5174';
-const API_KEY = import.meta.env.VITE_API_KEY || '';
-/** Build fetch headers and attach X-API-Key when configured via VITE_API_KEY. */
-const apiHeaders = (extra = {}) => (API_KEY ? { 'X-API-Key': API_KEY, ...extra } : { ...extra });
+const POLL_TELEMETRY_MS = 650;
+const POLL_FRAME_MS = 260;
+const ACTIVE_ALERT_WINDOW_S = 15;
+const R1_PERSON_THRESHOLD = 3;
 
-const TABS = [
-  { id: 'live', icon: '◉', label: 'Live Monitor' },
-  { id: 'anomalies', icon: '⚡', label: 'Anomaly Vault' },
-  { id: 'events', icon: '📦', label: 'Detection Ledger' },
-  { id: 'nodes', icon: '🛰️', label: 'Nodes & Rules' },
-];
+const RULE_LABELS = {
+  occupancy_spike: 'R1 · Occupancy spike',
+  unexpected_object: 'R2 · Unexpected object',
+  object_dwell: 'R3 · Object dwell',
+  rapid_gathering: 'Rapid gathering',
+  abandoned_after_owner_left: 'Abandoned bag',
+  bag_taken_by_other_person: 'Bag handoff',
+  after_hours_presence: 'After-hours presence',
+  vehicle_in_pedestrian_zone: 'Vehicle in pedestrian zone',
+};
+
+function formatRuleName(rule) {
+  if (!rule) return 'Unknown rule';
+  if (RULE_LABELS[rule]) return RULE_LABELS[rule];
+  const readable = String(rule).replace(/_/g, ' ');
+  return readable.charAt(0).toUpperCase() + readable.slice(1);
+}
+
+function summarizeAnomalyDetail(detail) {
+  if (!detail) return '-';
+  return String(detail).replace(/\s*\[agent:[\s\S]*\]$/i, '').trim() || String(detail);
+}
 
 /**
- * Render an inline SVG area/line timeline of recent person counts with a dashed R1 threshold line.
+ * Clean line chart of recent per-frame person detections against the R1 threshold.
  */
-function OccupancyChart({ events }) {
-  const personRows = events
-    .filter((e) => e.object_class === 'person')
-    .slice(0, 32)
-    .reverse();
+function OccupancyChart({ samples }) {
+  const width = 460;
+  const height = 148;
+  const pad = { top: 12, right: 64, bottom: 24, left: 28 };
+  const plotW = width - pad.left - pad.right;
+  const plotH = height - pad.top - pad.bottom;
 
-  if (personRows.length < 2) {
-    return (
-      <div style={{ padding: '2.2rem 0', textAlign: 'center', color: 'var(--mocha)', fontSize: '0.84rem' }}>
-        Waiting for person detections to plot timeline...
-      </div>
-    );
-  }
+  const maxCount = Math.max(
+    4,
+    ...samples.map((item) => Number(item.count) || 0)
+  );
+  // Keep even scale ticks (0, 2, 4, 6...) so neutral gridlines never collide with Limit (> 3).
+  const yMax = Math.ceil(maxCount / 2) * 2;
 
-  const maxCount = Math.max(4, ...personRows.map((r) => Number(r.count || 0)));
-  const w = 520;
-  const h = 155;
-  const pad = 16;
+  const yPos = (val) => pad.top + plotH - (val / yMax) * plotH;
+  const xPos = (idx, total) => {
+    if (total <= 1) return pad.left + plotW / 2;
+    return pad.left + (idx / (total - 1)) * plotW;
+  };
 
-  const pts = personRows.map((r, i) => {
-    const x = pad + (i / (personRows.length - 1)) * (w - pad * 2);
-    const y = h - pad - (Number(r.count || 0) / maxCount) * (h - pad * 2);
-    return [x, y];
-  });
+  const yTicks =
+    yMax === 4
+      ? [0, 2, 4]
+      : yMax === 6
+        ? [0, 2, 4, 6]
+        : [0, Math.round(yMax / 2), yMax];
+  const thresholdY = yPos(R1_PERSON_THRESHOLD);
 
-  const linePath = pts.map((p, i) => `${i === 0 ? 'M' : 'L'}${p[0].toFixed(1)},${p[1].toFixed(1)}`).join(' ');
-  const areaPath = `${linePath} L${pts[pts.length - 1][0].toFixed(1)},${h - pad} L${pts[0][0].toFixed(1)},${h - pad} Z`;
+  const points = samples
+    .map((item, idx) => `${xPos(idx, samples.length).toFixed(1)},${yPos(Number(item.count) || 0).toFixed(1)}`)
+    .join(' ');
+
+  const firstTs = samples.length ? formatClock(samples[0].ts) : '-';
+  const lastTs = samples.length ? formatClock(samples[samples.length - 1].ts) : '-';
 
   return (
-    <div>
-      <svg viewBox={`0 0 ${w} ${h}`} style={{ width: '100%', height: '165px', overflow: 'visible' }}>
-        <defs>
-          <linearGradient id="coffeeArea" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor="#d88f56" stopOpacity="0.52" />
-            <stop offset="100%" stopColor="#d88f56" stopOpacity="0.02" />
-          </linearGradient>
-        </defs>
+    <div className="chart-wrap">
+      <svg
+        className="chart-svg"
+        viewBox={`0 0 ${width} ${height}`}
+        role="img"
+        aria-label="Person count over recent frames compared to threshold of 3"
+      >
+        {yTicks.map((tick) => {
+          const y = yPos(tick);
+          return (
+            <g key={tick}>
+              <line
+                x1={pad.left}
+                y1={y}
+                x2={width - pad.right}
+                y2={y}
+                stroke={tick === 0 ? 'var(--border)' : 'var(--rule)'}
+                strokeWidth="1"
+              />
+              <text
+                x={pad.left - 6}
+                y={y + 3.5}
+                textAnchor="end"
+                className="mono chart-axis-text"
+              >
+                {tick}
+              </text>
+            </g>
+          );
+        })}
+
         <line
-          x1={pad}
-          y1={h - pad - (3 / maxCount) * (h - pad * 2)}
-          x2={w - pad}
-          y2={h - pad - (3 / maxCount) * (h - pad * 2)}
-          stroke="rgba(229, 92, 73, 0.45)"
-          strokeDasharray="4 4"
+          x1={pad.left}
+          y1={thresholdY}
+          x2={width - pad.right}
+          y2={thresholdY}
+          stroke="var(--crit-rule)"
           strokeWidth="1"
+          strokeDasharray="4 4"
         />
-        <path d={areaPath} fill="url(#coffeeArea)" />
-        <path d={linePath} fill="none" stroke="#eba872" strokeWidth="2.4" strokeLinecap="round" />
-        {pts.map((p, idx) => (
-          <circle key={idx} cx={p[0]} cy={p[1]} r="3" fill="#f6ede4" />
-        ))}
+        <text
+          x={width - pad.right + 8}
+          y={thresholdY + 3.5}
+          textAnchor="start"
+          className="chart-limit-text"
+        >
+          Limit (&gt; {R1_PERSON_THRESHOLD})
+        </text>
+
+        {samples.length === 1 && (
+          <circle
+            cx={xPos(0, 1)}
+            cy={yPos(Number(samples[0].count) || 0)}
+            r="3"
+            fill="var(--accent)"
+          />
+        )}
+
+        {samples.length > 1 && (
+          <polyline
+            fill="none"
+            stroke="var(--accent)"
+            strokeWidth="2"
+            strokeLinejoin="round"
+            strokeLinecap="round"
+            points={points}
+          />
+        )}
+
+        <text x={pad.left} y={height - 6} textAnchor="start" className="mono chart-axis-text">
+          {firstTs}
+        </text>
+        <text x={width - pad.right} y={height - 6} textAnchor="end" className="mono chart-axis-text">
+          {lastTs}
+        </text>
       </svg>
-      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.73rem', color: 'var(--mocha)' }}>
-        <span className="mono">
-          {new Date(personRows[0].ts * 1000).toLocaleTimeString()}
-        </span>
-        <span>Dashed red line: R1 threshold (&gt;3 persons)</span>
-        <span className="mono">
-          {new Date(personRows[personRows.length - 1].ts * 1000).toLocaleTimeString()}
-        </span>
-      </div>
     </div>
   );
 }
 
 /**
- * Server Analytics Console (:5173): polls backend telemetry, anomalies, events, health, and live frames.
+ * Analytics Console (:5173): real-time YOLO26n stream, telemetry strip, anomalies, events, and nodes.
  */
 export default function AnalyticsApp() {
   const [activeTab, setActiveTab] = useState('live');
-  const [stats, setStats] = useState({});
+  const [stats, setStats] = useState(null);
   const [anomalies, setAnomalies] = useState([]);
   const [events, setEvents] = useState([]);
   const [devices, setDevices] = useState([]);
-  const [health, setHealth] = useState({});
-  const [frameUrl, setFrameUrl] = useState(null);
+  const [health, setHealth] = useState(null);
+  const [frameUrl, setFrameUrl] = useState('');
+  const [lastSyncTs, setLastSyncTs] = useState(null);
+  const [fetchError, setFetchError] = useState('');
 
-  // Poll JSON telemetry every 650ms
+  const peerUrl = useMemo(() => {
+    const { protocol, hostname } = window.location;
+    return `${protocol}//${hostname}:5174`;
+  }, []);
+
   useEffect(() => {
-    let mounted = true;
-    /** Fetch all JSON telemetry endpoints in parallel and guard state updates against unmount. */
-    const pollTelemetry = async () => {
+    let alive = true;
+    let inFlight = false;
+
+    async function pollTelemetry() {
+      if (inFlight) return;
+      inFlight = true;
       try {
-        const hdrs = { headers: apiHeaders() };
-        const [sRes, aRes, eRes, dRes, hRes] = await Promise.all([
-          fetch(`${API_BASE}/stats`, hdrs),
-          fetch(`${API_BASE}/anomalies?limit=60`, hdrs),
-          fetch(`${API_BASE}/events?limit=120`, hdrs),
-          fetch(`${API_BASE}/devices`, hdrs),
-          fetch(`${API_BASE}/health`, hdrs),
+        const headers = buildHeaders();
+        const [statsRes, anomRes, evtRes, devRes, healthRes] = await Promise.all([
+          fetch(`${API_BASE}/stats`, { headers }),
+          fetch(`${API_BASE}/anomalies?limit=60`, { headers }),
+          fetch(`${API_BASE}/events?limit=120`, { headers }),
+          fetch(`${API_BASE}/devices`, { headers }),
+          fetch(`${API_BASE}/health`, { headers }),
         ]);
-        if (!mounted) return;
-        if (sRes.ok) setStats(await sRes.json());
-        if (aRes.ok) setAnomalies(await aRes.json());
-        if (eRes.ok) setEvents(await eRes.json());
-        if (dRes.ok) setDevices(await dRes.json());
-        if (hRes.ok) setHealth(await hRes.json());
-      } catch {
-        // Ignore transient network hiccups
+
+        if (!statsRes.ok) {
+          throw new Error(`HTTP ${statsRes.status}`);
+        }
+
+        const [nextStats, nextAnom, nextEvt, nextDev, nextHealth] = await Promise.all([
+          statsRes.json(),
+          anomRes.ok ? anomRes.json() : [],
+          evtRes.ok ? evtRes.json() : [],
+          devRes.ok ? devRes.json() : [],
+          healthRes.ok ? healthRes.json() : null,
+        ]);
+
+        if (!alive) return;
+        setStats(nextStats);
+        setAnomalies(Array.isArray(nextAnom) ? nextAnom : []);
+        setEvents(Array.isArray(nextEvt) ? nextEvt : []);
+        setDevices(Array.isArray(nextDev) ? nextDev : []);
+        setHealth(nextHealth);
+        setLastSyncTs(Date.now() / 1000);
+        setFetchError('');
+      } catch (err) {
+        if (!alive) return;
+        setFetchError(err instanceof Error ? err.message : 'Backend unavailable');
+      } finally {
+        inFlight = false;
       }
-    };
+    }
+
     pollTelemetry();
-    const id = setInterval(pollTelemetry, 650);
+    const timer = window.setInterval(pollTelemetry, POLL_TELEMETRY_MS);
     return () => {
-      mounted = false;
-      clearInterval(id);
+      alive = false;
+      window.clearInterval(timer);
     };
   }, []);
 
-  // Poll annotated JPEG frame every 260ms with zero-flicker Blob swap
   useEffect(() => {
-    let mounted = true;
-    let currentObjUrl = null;
+    let alive = true;
+    let inFlight = false;
+    let currentObjectUrl = '';
 
-    /** Fetch the latest annotated JPEG as a Blob URL and revoke the prior URL after swapping. */
-    const pollFrame = async () => {
+    async function pollFrame() {
+      if (inFlight) return;
+      inFlight = true;
       try {
-        const res = await fetch(`${API_BASE}/frames/latest?t=${Date.now()}`, { headers: apiHeaders() });
-        if (!res.ok) return;
+        const res = await fetch(`${API_BASE}/frames/latest?t=${Date.now()}`, {
+          headers: buildHeaders(),
+        });
+        if (!res.ok || res.status === 204) return;
         const blob = await res.blob();
-        if (!mounted || blob.size === 0) return;
+        if (!alive || blob.size === 0) return;
+
         const nextUrl = URL.createObjectURL(blob);
+        if (currentObjectUrl) {
+          URL.revokeObjectURL(currentObjectUrl);
+        }
+        currentObjectUrl = nextUrl;
         setFrameUrl(nextUrl);
-        if (currentObjUrl) URL.revokeObjectURL(currentObjUrl);
-        currentObjUrl = nextUrl;
       } catch {
-        // Ignore when no frame yet
+        // Keep last valid frame visible during transient stalls.
+      } finally {
+        inFlight = false;
+      }
+    }
+
+    pollFrame();
+    const timer = window.setInterval(pollFrame, POLL_FRAME_MS);
+    return () => {
+      alive = false;
+      window.clearInterval(timer);
+      if (currentObjectUrl) {
+        URL.revokeObjectURL(currentObjectUrl);
       }
     };
-    pollFrame();
-    const id = setInterval(pollFrame, 260);
-    return () => {
-      mounted = false;
-      clearInterval(id);
-      if (currentObjUrl) URL.revokeObjectURL(currentObjUrl);
-    };
   }, []);
 
+  const latestAnomaly = anomalies[0] || null;
   const nowSec = Date.now() / 1000;
-  const recentAlert =
-    anomalies.length > 0 && nowSec - Number(anomalies[0].ts || 0) <= 15
-      ? anomalies[0]
-      : null;
+  const hasActiveAlert = Boolean(
+    latestAnomaly && nowSec - Number(latestAnomaly.ts || 0) <= ACTIVE_ALERT_WINDOW_S
+  );
 
-  const byRule = stats.anomalies_by_rule || {};
+  const personSamples = useMemo(() => {
+    const filtered = events
+      .filter((evt) => evt.object_class === 'person')
+      .slice(0, 30)
+      .reverse();
+    return filtered;
+  }, [events]);
+
+  const byRule = stats?.anomalies_by_rule || {};
+  const primaryDevice = devices[0]?.device_id || null;
+  const statusTone = fetchError ? 'warn' : hasActiveAlert ? 'crit' : 'live';
+  const topMeta = fetchError
+    ? 'Backend offline'
+    : primaryDevice
+      ? `${primaryDevice} · ${(stats?.fps ?? 0).toFixed(1)} FPS`
+      : `0 nodes · ${(stats?.fps ?? 0).toFixed(1)} FPS`;
+
+  const metrics = [
+    {
+      label: 'Total events',
+      value: stats?.total_events ?? 0,
+    },
+    {
+      label: 'Occupancy spikes',
+      value: byRule.occupancy_spike ?? 0,
+    },
+    {
+      label: 'Unexpected objects',
+      value: byRule.unexpected_object ?? 0,
+    },
+    {
+      label: 'Object dwell',
+      value: byRule.object_dwell ?? 0,
+    },
+    {
+      label: 'Pipeline FPS',
+      value: (stats?.fps ?? 0).toFixed(1),
+      unit: 'fps',
+    },
+    {
+      label: 'Inf / E2E latency',
+      value: (stats?.avg_inference_ms ?? 0).toFixed(1),
+      unit: `/ ${Math.round(stats?.avg_e2e_ms ?? 0)}ms`,
+    },
+  ];
+
+  const tabs = [
+    { id: 'live', label: 'Live Monitor' },
+    {
+      id: 'anomalies',
+      label: 'Anomalies',
+      badge: anomalies.length > 0 ? anomalies.length : '',
+      badgeAlert: hasActiveAlert,
+    },
+    {
+      id: 'detections',
+      label: 'Detections',
+      badge: events.length > 0 ? events.length : '',
+    },
+    {
+      id: 'nodes',
+      label: 'Nodes & Rules',
+      badge: devices.length > 0 ? devices.length : '',
+    },
+  ];
+
+  const subtitleText = health?.model
+    ? `${health.model} ONNX worker · SQLite WAL stream · ${devices.length} connected node${devices.length === 1 ? '' : 's'}`
+    : 'Real-time YOLO26n ONNX anomaly detection and telemetry console';
+
+  const headerStamp = fetchError
+    ? `Disconnected (${fetchError})`
+    : lastSyncTs
+      ? `Updated ${formatClock(lastSyncTs)}`
+      : 'Connecting…';
 
   return (
-    <div className="app-container">
-      <CustomCursor />
-
-      <HeroHeader
-        badge="Server Analytics Console · Pipeline Consumer"
-        title="Edge-to-Server Anomaly Intelligence"
-        subtitle="Real-time YOLO26n ONNX inference, centroid tracking & R1/R2/R3 rule evaluation"
-        peerUrl={EDGE_FRONTEND_URL}
-        peerLabel="Open Edge Emitter Deck (:5174)"
+    <div className="console-shell">
+      <ConsoleTopBar
+        title="Analytics Console"
+        port="5173"
+        statusTone={statusTone}
+        metaText={topMeta}
+        peerLabel="Edge Control Deck (:5174)"
+        peerHref={peerUrl}
       />
 
-      {recentAlert && (
-        <div className="alert-banner">
-          <div>
-            🚨 <strong>ACTIVE {String(recentAlert.severity || 'WARNING').toUpperCase()} ALERT</strong> ·{' '}
-            <span className="mono">{recentAlert.rule}</span> — {recentAlert.detail}
-          </div>
-          <div className="mono" style={{ fontSize: '0.8rem', opacity: 0.9 }}>
-            node: {recentAlert.device_id} · {Math.max(0, nowSec - recentAlert.ts).toFixed(1)}s ago
+      <ConsolePageHeader
+        title="Live Pipeline Monitor"
+        subtitle={subtitleText}
+        stamp={headerStamp}
+      />
+
+      {fetchError && (
+        <div className="notice-bar notice-bar--warn" role="status">
+          <div className="notice-main">
+            <span className="notice-title">Backend connection stalled</span>
+            <span>
+              Unable to reach {API_BASE}/stats ({fetchError}). Retrying automatically.
+            </span>
           </div>
         </div>
       )}
 
-      <section className="kpi-grid">
-        <div className="glass-card kpi-tile">
-          <div className="kpi-label">Total Events</div>
-          <div className="kpi-value">{stats.total_events ?? 0}</div>
-          <div className="kpi-sub">SQLite logged</div>
-        </div>
-        <div className="glass-card kpi-tile">
-          <div className="kpi-label">R1 Occupancy Spike</div>
-          <div className="kpi-value">{byRule.occupancy_spike ?? 0}</div>
-          <div className="kpi-sub">&gt;3 persons in frame</div>
-        </div>
-        <div className="glass-card kpi-tile">
-          <div className="kpi-label">R2 Unexpected Obj</div>
-          <div className="kpi-value">{byRule.unexpected_object ?? 0}</div>
-          <div className="kpi-sub">&ge;5s bag presence</div>
-        </div>
-        <div className="glass-card kpi-tile">
-          <div className="kpi-label">R3 Object Dwell</div>
-          <div className="kpi-value">{byRule.object_dwell ?? 0}</div>
-          <div className="kpi-sub">&ge;30s unattended</div>
-        </div>
-        <div className="glass-card kpi-tile">
-          <div className="kpi-label">Pipeline FPS</div>
-          <div className="kpi-value">{stats.fps ?? 'idle'}</div>
-          <div className="kpi-sub">10s rolling window</div>
-        </div>
-        <div className="glass-card kpi-tile">
-          <div className="kpi-label">Inf / E2E Latency</div>
-          <div className="kpi-value">
-            {stats.avg_inference_ms ?? '-'} <span style={{ fontSize: '0.95rem', color: 'var(--latte)' }}>/ {stats.avg_e2e_ms ?? '-'}ms</span>
+      {!fetchError && hasActiveAlert && latestAnomaly && (
+        <div className="notice-bar notice-bar--crit" role="alert">
+          <div className="notice-main">
+            <span className="notice-title">
+              Active alert · {formatRuleName(latestAnomaly.rule)}
+            </span>
+            <span>
+              {summarizeAnomalyDetail(latestAnomaly.detail)} ({latestAnomaly.device_id} at{' '}
+              {formatClock(latestAnomaly.ts)})
+            </span>
           </div>
-          <div className="kpi-sub">ONNX CPU runtime</div>
+          <button
+            type="button"
+            className="btn btn--sm"
+            onClick={() => setActiveTab('anomalies')}
+          >
+            Open Anomalies
+          </button>
         </div>
-      </section>
+      )}
 
-      <AnimatedTabBar tabs={TABS} activeTab={activeTab} onChange={setActiveTab} />
+      <MetricStrip metrics={metrics} />
+
+      <TabBar
+        tabs={tabs}
+        activeTab={activeTab}
+        onChange={setActiveTab}
+        ariaLabel="Analytics Console sections"
+      />
 
       {activeTab === 'live' && (
-        <div className="split-grid">
-          <div className="glass-card">
-            <div className="section-kicker">Computer Vision Output</div>
-            <h2 className="section-heading">Annotated YOLO26n Stream</h2>
+        <section className="split-grid" aria-labelledby="tab-live">
+          <article className="panel">
+            <div className="panel-head">
+              <h2 className="panel-title">Annotated YOLO26n Feed</h2>
+              <span className="panel-meta">
+                Queue {stats?.queue_depth ?? 0} · {(stats?.avg_frame_kb ?? 0).toFixed(1)} KB avg
+              </span>
+            </div>
+
             <div className="video-stage">
               {frameUrl ? (
-                <img src={frameUrl} alt="Live annotated stream" />
+                <img
+                  className="video-frame"
+                  src={frameUrl}
+                  alt="Live annotated server video stream"
+                />
               ) : (
-                <div style={{ color: 'var(--mocha)', fontSize: '0.88rem', padding: '1rem', textAlign: 'center' }}>
-                  Waiting for annotated frame on <code>GET /frames/latest</code>...
+                <div className="video-empty">
+                  <div>Waiting for annotated video frames</div>
+                  <div className="video-empty-sub">
+                    Start streaming from Edge Control Deck (:5174) or POST /frames
+                  </div>
                 </div>
               )}
-              <div className="video-hud-pill">
-                <span>Payload: {stats.avg_frame_kb ?? '-'} KB avg</span>
-                <span>Queue: {stats.queue_depth ?? 0}/8</span>
-                <span>Dropped: {stats.frames_dropped ?? 0}</span>
+            </div>
+
+            <div className="video-caption">
+              <span>
+                {frameUrl
+                  ? 'Rendering bounding-box JPEG frames from backend pipeline'
+                  : 'No processed frame cached yet'}
+              </span>
+              <span className="mono">
+                Rx {stats?.frames_received ?? 0} · Drop {stats?.frames_dropped ?? 0} · Uptime{' '}
+                {formatDuration(stats?.uptime_s)}
+              </span>
+            </div>
+          </article>
+
+          <div className="stack-col">
+            <article className="panel">
+              <div className="panel-head">
+                <h2 className="panel-title">Person Count Timeline</h2>
+                <span className="panel-meta">
+                  {personSamples.length
+                    ? `Latest ${personSamples.length} samples`
+                    : 'No samples yet'}
+                </span>
               </div>
-            </div>
-          </div>
+              <OccupancyChart samples={personSamples} />
+            </article>
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '1.15rem' }}>
-            <div className="glass-card">
-              <div className="section-kicker">Occupancy Telemetry</div>
-              <h2 className="section-heading">Person Count Timeline</h2>
-              <OccupancyChart events={events} />
-            </div>
+            <article className="panel">
+              <div className="panel-head">
+                <h2 className="panel-title">Recent Anomaly Triggers</h2>
+                <button
+                  type="button"
+                  className="btn btn--sm"
+                  onClick={() => setActiveTab('anomalies')}
+                >
+                  View all
+                </button>
+              </div>
 
-            <div className="glass-card">
-              <div className="section-kicker">Rule Engine Pulse</div>
-              <h2 className="section-heading">Recent Anomaly Triggers</h2>
               {anomalies.length === 0 ? (
-                <p style={{ color: 'var(--mocha)', fontSize: '0.85rem' }}>
-                  No anomaly triggers recorded yet. Switch video feed or inject events from the Edge Deck (:5174).
-                </p>
+                <div className="empty-state">No anomaly triggers logged yet.</div>
               ) : (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                  {anomalies.slice(0, 5).map((a, idx) => (
-                    <div
-                      key={idx}
-                      style={{
-                        padding: '0.6rem 0.85rem',
-                        borderRadius: '13px',
-                        background: 'rgba(18, 12, 9, 0.55)',
-                        borderLeft: `3px solid ${a.severity === 'critical' ? 'var(--crimson)' : 'var(--amber)'}`,
-                        display: 'flex',
-                        justifyContent: 'space-between',
-                        alignItems: 'center',
-                        fontSize: '0.82rem',
-                      }}
-                    >
-                      <div>
-                        <span className={`badge-sev ${a.severity === 'critical' ? 'badge-critical' : 'badge-warning'}`}>
-                          {a.rule}
-                        </span>{' '}
-                        <span style={{ marginLeft: '0.4rem' }}>{a.detail}</span>
+                <div className="compact-list">
+                  {anomalies.slice(0, 3).map((item, idx) => (
+                    <div className="compact-row" key={`${item.ts}-${item.device_id}-${idx}`}>
+                      <div className="compact-row-main">
+                        <div className="compact-row-top">
+                          <span className={`pill pill--${item.severity || 'info'}`}>
+                            {item.severity || 'info'}
+                          </span>
+                          <span>{formatRuleName(item.rule)}</span>
+                          <span className="mono muted">{item.device_id}</span>
+                        </div>
+                        <div className="compact-row-detail">
+                          {summarizeAnomalyDetail(item.detail)}
+                        </div>
                       </div>
-                      <span className="mono" style={{ color: 'var(--mocha)', fontSize: '0.75rem' }}>
-                        {a.device_id} · {new Date(a.ts * 1000).toLocaleTimeString()}
-                      </span>
+                      <span className="mono compact-row-time">{formatClock(item.ts)}</span>
                     </div>
                   ))}
                 </div>
               )}
-            </div>
+            </article>
           </div>
-        </div>
+        </section>
       )}
 
       {activeTab === 'anomalies' && (
-        <div className="glass-card">
-          <div className="section-kicker">Audit Log</div>
-          <h2 className="section-heading">Triggered Anomalies (R1 · R2 · R3)</h2>
-          <div className="glass-table-wrap">
-            <table className="glass-table">
-              <thead>
-                <tr>
-                  <th>Time</th>
-                  <th>Severity</th>
-                  <th>Rule</th>
-                  <th>Edge Node</th>
-                  <th>Detail</th>
-                </tr>
-              </thead>
-              <tbody>
-                {anomalies.map((a, i) => (
-                  <tr key={i}>
-                    <td className="mono">{new Date(a.ts * 1000).toLocaleTimeString()}</td>
-                    <td>
-                      <span className={`badge-sev ${a.severity === 'critical' ? 'badge-critical' : 'badge-warning'}`}>
-                        {a.severity}
-                      </span>
-                    </td>
-                    <td className="mono">{a.rule}</td>
-                    <td className="mono">{a.device_id}</td>
-                    <td>{a.detail}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+        <section className="panel panel--flush" aria-labelledby="tab-anomalies">
+          <div className="panel-head">
+            <h2 className="panel-title">Anomaly Log</h2>
+            <span className="panel-meta">{anomalies.length} recent records</span>
           </div>
-        </div>
-      )}
 
-      {activeTab === 'events' && (
-        <div className="glass-card">
-          <div className="section-kicker">SQLite Ingest Stream</div>
-          <h2 className="section-heading">Recent Object Detections</h2>
-          <div className="glass-table-wrap">
-            <table className="glass-table">
-              <thead>
-                <tr>
-                  <th>Time</th>
-                  <th>Node</th>
-                  <th>Source</th>
-                  <th>Class</th>
-                  <th>Count</th>
-                  <th>Confidence</th>
-                </tr>
-              </thead>
-              <tbody>
-                {events.slice(0, 60).map((e, i) => (
-                  <tr key={i}>
-                    <td className="mono">{new Date(e.ts * 1000).toLocaleTimeString()}</td>
-                    <td className="mono">{e.device_id}</td>
-                    <td className="mono">{e.source}</td>
-                    <td style={{ fontWeight: 600, color: 'var(--caramel-glow)' }}>{e.object_class}</td>
-                    <td className="mono">{e.count}</td>
-                    <td className="mono">{(Number(e.avg_conf || 0) * 100).toFixed(1)}%</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      )}
-
-      {activeTab === 'nodes' && (
-        <div className="split-grid">
-          <div className="glass-card">
-            <div className="section-kicker">Telemetry Producers</div>
-            <h2 className="section-heading">Connected Edge Nodes</h2>
-            <div className="glass-table-wrap">
-              <table className="glass-table">
+          {anomalies.length === 0 ? (
+            <div className="empty-state">No anomalies recorded in this session.</div>
+          ) : (
+            <div className="table-scroll">
+              <table className="data-table">
                 <thead>
                   <tr>
-                    <th>Device ID</th>
-                    <th>Kind</th>
-                    <th>Frames Sent</th>
-                    <th>Last Heartbeat</th>
+                    <th>Timestamp</th>
+                    <th>Device</th>
+                    <th>Rule</th>
+                    <th>Severity</th>
+                    <th>Detail</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {devices.map((d, i) => (
-                    <tr key={i}>
-                      <td className="mono" style={{ color: 'var(--caramel-glow)' }}>{d.device_id}</td>
-                      <td className="mono">{d.source_kind}</td>
-                      <td className="mono">{d.frames_received}</td>
-                      <td className="mono">{Math.max(0, nowSec - d.last_seen_ts).toFixed(1)}s ago</td>
+                  {anomalies.map((item, idx) => (
+                    <tr key={`${item.ts}-${item.device_id}-${idx}`}>
+                      <td className="mono col-nowrap">{formatClock(item.ts)}</td>
+                      <td className="mono col-nowrap">{item.device_id}</td>
+                      <td className="mono col-nowrap">{item.rule}</td>
+                      <td className="col-nowrap">
+                        <span className={`pill pill--${item.severity || 'info'}`}>
+                          {item.severity || 'info'}
+                        </span>
+                      </td>
+                      <td>{item.detail}</td>
                     </tr>
                   ))}
                 </tbody>
               </table>
             </div>
+          )}
+        </section>
+      )}
+
+      {activeTab === 'detections' && (
+        <section className="panel panel--flush" aria-labelledby="tab-detections">
+          <div className="panel-head">
+            <h2 className="panel-title">Detection Events</h2>
+            <span className="panel-meta">{events.length} recent records</span>
           </div>
 
-          <div className="glass-card">
-            <div className="section-kicker">Engine Health & Config</div>
-            <h2 className="section-heading">Active Rule Thresholds</h2>
-            <pre
-              className="mono"
-              style={{
-                background: 'rgba(14, 9, 6, 0.65)',
-                padding: '1rem',
-                borderRadius: '14px',
-                border: '1px solid rgba(246, 237, 228, 0.1)',
-                fontSize: '0.8rem',
-                color: 'var(--crema)',
-                overflowX: 'auto',
-              }}
-            >
-              {JSON.stringify(
-                {
-                  status: health.status || 'online',
-                  worker: health.worker || 'running',
-                  model: health.model || 'yolo26n.onnx',
-                  frames_received: stats.frames_received ?? 0,
-                  frames_dropped: stats.frames_dropped ?? 0,
-                  rules: health.rules || {},
-                },
-                null,
-                2
-              )}
-            </pre>
-          </div>
-        </div>
+          {events.length === 0 ? (
+            <div className="empty-state">Waiting for object detection events from worker.</div>
+          ) : (
+            <div className="table-scroll">
+              <table className="data-table">
+                <thead>
+                  <tr>
+                    <th>Timestamp</th>
+                    <th>Device</th>
+                    <th>Source</th>
+                    <th>Class</th>
+                    <th className="num">Count</th>
+                    <th className="num">Confidence</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {events.map((evt, idx) => (
+                    <tr key={`${evt.ts}-${evt.device_id}-${evt.object_class}-${idx}`}>
+                      <td className="mono col-nowrap">{formatClock(evt.ts)}</td>
+                      <td className="mono col-nowrap">{evt.device_id}</td>
+                      <td className="mono muted col-nowrap">{evt.source}</td>
+                      <td className="col-nowrap">{evt.object_class}</td>
+                      <td className="num mono">{evt.count}</td>
+                      <td className="num mono">
+                        {evt.avg_conf !== undefined && evt.avg_conf !== null
+                          ? `${Math.round(Number(evt.avg_conf) * 100)}%`
+                          : '-'}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </section>
+      )}
+
+      {activeTab === 'nodes' && (
+        <section className="split-grid split-grid--equal" aria-labelledby="tab-nodes">
+          <article className="panel panel--flush">
+            <div className="panel-head">
+              <h2 className="panel-title">Connected Edge Nodes</h2>
+              <span className="panel-meta">{devices.length} active</span>
+            </div>
+
+            {devices.length === 0 ? (
+              <div className="empty-state">No edge devices have reported frames yet.</div>
+            ) : (
+              <div className="table-scroll">
+                <table className="data-table">
+                  <thead>
+                    <tr>
+                      <th>Device ID</th>
+                      <th>Source Kind</th>
+                      <th className="num">Frames Received</th>
+                      <th className="num">Last Seen</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {devices.map((dev) => (
+                      <tr key={dev.device_id}>
+                        <td className="mono">{dev.device_id}</td>
+                        <td className="mono muted">{dev.source_kind || '-'}</td>
+                        <td className="num mono">{dev.frames_received ?? 0}</td>
+                        <td className="num mono">{formatClock(dev.last_seen_ts)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </article>
+
+          <article className="panel panel--flush">
+            <div className="panel-head">
+              <h2 className="panel-title">System Health &amp; Anomaly Rules</h2>
+              <span className="pill pill--ok">{health?.status || 'unknown'}</span>
+            </div>
+
+            <div className="panel-body">
+              <div className="kv-list">
+                <div className="kv-row">
+                  <span className="kv-key">Inference model</span>
+                  <span className="kv-val">{health?.model || '-'}</span>
+                </div>
+                <div className="kv-row">
+                  <span className="kv-key">SQLite store</span>
+                  <span className="kv-val">{health?.db || '-'}</span>
+                </div>
+                <div className="kv-row">
+                  <span className="kv-key">Worker status</span>
+                  <span className="kv-val">{health?.worker || '-'}</span>
+                </div>
+                <div className="kv-row">
+                  <span className="kv-key">R1 · occupancy_spike</span>
+                  <span className="kv-val">person count &gt; 3 per frame</span>
+                </div>
+                <div className="kv-row">
+                  <span className="kv-key">R2 · unexpected_object</span>
+                  <span className="kv-val">non-desk object persists &gt; 5s</span>
+                </div>
+                <div className="kv-row">
+                  <span className="kv-key">R3 · object_dwell</span>
+                  <span className="kv-val">unattended item stationary &ge; 30s</span>
+                </div>
+              </div>
+            </div>
+          </article>
+        </section>
       )}
     </div>
   );
